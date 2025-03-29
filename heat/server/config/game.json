@@ -1,0 +1,514 @@
+﻿{
+    "levels": {
+        "levels": [
+            {
+                "m_guid": {
+                    "a": 39176293628033027,
+                    "b": 3337683219
+                }
+            },
+            {
+                "m_guid": {
+                    "a": 39176293628033027,
+                    "b": 3337683219
+                }
+            },
+            {
+                "m_guid": {
+                    "a": 36797447895856643,
+                    "b": 3266451588
+                }
+            },
+            {
+                "m_guid": {
+                    "a": 36797447895856643,
+                    "b": 3266451588
+                }
+            },
+            {
+                "m_guid": {
+                    "a": 41877168900993731,
+                    "b": 3412644302
+                }
+            },
+            {
+                "m_guid": {
+                    "a": 41877168900993731,
+                    "b": 3412644302
+                }
+            }
+        ],
+        "heats": 1,
+        "repeatLoops": 1,
+        "order": 0,
+        "maxLevels": 6,
+        "standingsHistory": 100
+    },
+    "randomLevelSelectorProperties": {
+        "builtInWeight": 2.0,
+        "nonBuiltInWeight": 1.0,
+        "circuitWeight": 1.0,
+        "specialStageWeight": 2.0,
+        "sumoWeight": 1.5,
+        "tagWeight": 1.0,
+        "collectorWeight": 1.0,
+        "soccerWeight": 1.0,
+        "captureWeight": 1.0,
+        "weaponBattleWeight": 1.0,
+        "likedWeight": 2.0,
+        "recentWeight": 3.0,
+        "recentDays": 14
+    },
+    "vehicles": {
+        "possibleVehicles": [
+            {
+                "m_guid": {
+                    "a": 33014670908545803,
+                    "b": 3124957840
+                }
+            },
+            {
+                "m_guid": {
+                    "a": 33014591111796299,
+                    "b": 3124953946
+                }
+            },
+            {
+                "m_guid": {
+                    "a": 33014656543318795,
+                    "b": 3124957032
+                }
+            },
+            {
+                "m_guid": {
+                    "a": 33014556230277707,
+                    "b": 3124952289
+                }
+            },
+            {
+                "m_guid": {
+                    "a": 33014617833656459,
+                    "b": 3124955144
+                }
+            }
+        ],
+        "selectionType": 2
+    },
+    "eventSettings": {
+        "race": {
+            "raceMode": 0,
+            "alwaysHotlapWhenAlone": false,
+            "maxLaps": 9,
+            "maxMinutes": 1440.0,
+            "contactRules": 0,
+            "points": {
+                "pointsForFastestLap": 1,
+                "position1": 25,
+                "position2": 20,
+                "position3": 16,
+                "position4": 13,
+                "position5": 11,
+                "position6": 10,
+                "position7": 9,
+                "position8": 8,
+                "position9": 7,
+                "position10": 6,
+                "position11": 5,
+                "position12": 4,
+                "position13": 3,
+                "position14": 2,
+                "position15": 1,
+                "position16": 0,
+                "position17": 0,
+                "position18": 0,
+                "position19": 0,
+                "position20": 0
+            },
+            "startingOrder": 3,
+            "startStyle": 1,
+            "relativeFinishTime": 1.399999976158142,
+            "finishExtraSeconds": 100,
+            "shortcutSlowdownSeconds": 3,
+            "shortcutSlowdownAmount": 50
+        },
+        "respawning": {
+            "maxRespawnCount": -1,
+            "respawnTime": 1.0,
+            "respawnHeight": 3.0,
+            "startBehindWhenHotlapping": true,
+            "hotlapBehindDistance": 750
+        },
+        "drafting": {
+            "draftingOn": true,
+            "maxDraftingDistance": 25,
+            "maxDraftingAngle": 14,
+            "draftingSpeedEffect": 9,
+            "draftingDownforceReduction": 25,
+            "draftingGripReduction": 0,
+            "draftingForMaximumEffect": 80,
+            "draftingAttenuationPower": 2.0,
+            "draftingOnInGhostRaces": false
+        },
+        "physics": {
+            "adjustVehicleCollisionSettings": true,
+            "collisionSteadiness": 65,
+            "collisionExtraStability": 50,
+            "stuckAvoidance": 25,
+            "deadlyTerrain": false,
+            "experimentalSettings": false,
+            "physicsChangesAffectAI": false,
+            "changeGravity": false,
+            "gravityMultiplier": 1.0,
+            "extraObjectGravityMultiplier": 1.0,
+            "overrideBounciness": false,
+            "bounciness": 0.25,
+            "bounceCombine": 0,
+            "overrideFriction": false,
+            "staticFriction": 0.25,
+            "dynamicFriction": 0.25,
+            "frictionCombine": 0,
+            "oldLegacyCollisions": false,
+            "maxSpeedMultiplier": 1.0,
+            "accelerationMultiplier": 1.0,
+            "viscosityMultiplier": 1.0,
+            "gripMultiplier": 1.0,
+            "brakingMultiplier": 1.0,
+            "oversteeringMultiplier": 1.0,
+            "reversingMultiplier": 1.0
+        },
+        "battle": {
+            "wantedBattleMode": 0,
+            "maxBattleMinutes": 3.0,
+            "multiroundTeamBattle": 1,
+            "maxMultiroundBattleWins": 100,
+            "battleExtraTimeMinutes": 0.0,
+            "flagLostByEnemyTouch": true,
+            "flagLostByWeaponHit": true,
+            "battleBounciness": 0.800000011920929,
+            "battleTeamWinPoints": 10,
+            "battleWreckPoints": 3,
+            "battleWeaponHitPoints": 1,
+            "battleFlagCapturePoints": 5,
+            "teamBattleSurvivalPoints": 3,
+            "giveTeamBattlePositionPoints": false,
+            "allowRespawningInBattle": 0,
+            "pointsLostForRespawnableWrecks": 3
+        },
+        "sumo": {
+            "maxSumoMinutes": 2.0,
+            "sumoBounciness": 0.800000011920929,
+            "sumoWreckPoints": 3
+        },
+        "tag": {
+            "forceTagEvent": false,
+            "maxTagMinutes": 2.0,
+            "tagRules": 0,
+            "firstTagAlwaysTransferred": true,
+            "initialSpreadTagCount": 2,
+            "initialTransferTagPercentage": 25,
+            "initialTaggedPlayersDelay": 1.0,
+            "transferImmunityTime": 2.0,
+            "spreadTagSurvivalPoints": 5,
+            "taggedByWeapons": true
+        },
+        "soccer": {
+            "maxSoccerMinutes": 2.0,
+            "soccerExtraTimeMinutes": 0.0,
+            "maxSoccerGoals": 100,
+            "minGoalDifference": 1,
+            "ballCount": 1,
+            "soccerFlow": 1,
+            "soccerStartPositions": 0,
+            "soccerGoalPoints": 1,
+            "soccerAssistPoints": 1,
+            "optionalBoundaryHeight": 10.0,
+            "maxNoBallTouchesTime": 30,
+            "goalScoredIfOpponentsEliminated": true,
+            "ballProperties": {
+                "ballSize": 2.0,
+                "ballTexture": 24,
+                "ballMass": 50.0,
+                "kickBoost": 7.5,
+                "ballBounciness": 0.800000011920929,
+                "ballBounceCombine": 0,
+                "ballFriction": 0.10000000149011612,
+                "ballFrictionCombine": 0,
+                "ballDrag": 0.20000000298023225,
+                "ballAngularDrag": 0.20000000298023225,
+                "ballGravity": 20.0
+            }
+        },
+        "collector": {
+            "collectibleType": 0,
+            "maxCollectorMinutes": 2.0
+        },
+        "teams": {
+            "teamCount": 0,
+            "autoAdjustTeamSizes": true,
+            "playersCanRequestTeamChange": true,
+            "teamScoreBalancing": 3,
+            "teamPoints": 1,
+            "teamStartingOrder": 1,
+            "teamOrderDecider": 1,
+            "teamWinPlayerPoints": 0,
+            "deprecatedTeamWinPlayerPoints": 10,
+            "teamPaintStrength": 50,
+            "deprecatedTeamPaintStrength": 50,
+            "resetTeamsAtSessionInit": true
+        },
+        "fuel": {
+            "fuelOn": 1,
+            "fuelFullGasTime": 359,
+            "refuelTime": 5,
+            "noFuelSlowdown": 60,
+            "fullTankSlowdown": 0,
+            "canChangeInitialFuel": false
+        },
+        "tireWear": {
+            "tireWearOn": 1,
+            "tireChangeTime": 2,
+            "tireCompoundCount": 1,
+            "compound1Name": 0,
+            "compound1InitialPerformance": 100,
+            "compound1Endurance": 1073,
+            "compound2Name": 1,
+            "compound2InitialPerformance": 80,
+            "compound2Endurance": 900,
+            "compound3Name": 2,
+            "compound3InitialPerformance": 60,
+            "compound3Endurance": 1500,
+            "tireWearEffectCurve": 3.5,
+            "tireWearGripEffect": 30,
+            "tireWearOversteeringEffect": 30,
+            "tireWearBrakingEffect": 20,
+            "tireWearSlowdownEffect": 5,
+            "totalTireWearSlowdown": 25,
+            "tireWearForBraking": 8,
+            "tireWearForLockedBraking": 20,
+            "tireWearForTurning": 6,
+            "tireWearForSliding": 12,
+            "tireWearForRoughSurface": 12
+        },
+        "damage": {
+            "collisionDamageOn": false,
+            "vehicleCollisionDamage": 20,
+            "collisionDamage": 20,
+            "frontalCollisionDamageReduction": 50,
+            "rearCollisionDamageReduction": 50,
+            "repairTime": 10,
+            "automaticRepairTime": 0,
+            "maxDamageSlowdown": 0,
+            "slowdownStartHealth": 50,
+            "maxDamageDownforceLoss": 0,
+            "downforceLossStartHealth": 50,
+            "healthAfterRespawning": 100,
+            "respawnNeverDecreasesHealth": false
+        },
+        "pit": {
+            "immovablePitStop": true,
+            "pitAreaSlowdown": 2,
+            "canRespawnWithPitSlowdown": false,
+            "pitSlowdownAmount": 60,
+            "maxRelativePitAreaSpeed": 3.4028234663852887e38,
+            "pitSlowdownFuelConsumption": 1,
+            "legacySlowdownSystem": false,
+            "pitSlowdownSpeedDividerInEvent": 1.0,
+            "pitSlowdownFuelConsumptionInThirdsInEvent": 3
+        },
+        "weapons": {
+            "forceWeaponsOn": false,
+            "forcedMissilesLimit": 0,
+            "minMissileReloadTime": 2,
+            "missileInitialLoadTime": 100,
+            "missileDamage": 50,
+            "friendlyFire": 25,
+            "missileHitImpulse": 25,
+            "missileCollisionMass": 100,
+            "missileTorqueImpulse": 100,
+            "missileBallHitImpulse": 10,
+            "missileBlastRadius": 0,
+            "missileMaxSpeed": 1000,
+            "missileAcceleration": 50
+        },
+        "special": {
+            "forcedCameraPreset": 0,
+            "forcedCameraWhenDisabled": 0,
+            "canLookBackWhenForced": false,
+            "canLookAroundWhenForced": false,
+            "hidePlayerMarkers": false
+        }
+    },
+    "localPlayers": {
+        "localPlayers": 1,
+        "spectateOnly": false,
+        "player2Name": "Player 2",
+        "player2Color": {
+            "data1": 1,
+            "data2": 2,
+            "data3": 0
+        },
+        "player2TeamTag": "",
+        "player2Flag": 0,
+        "player2PaintJob": 0,
+        "player3Name": "Player 3",
+        "player3Color": {
+            "data1": 1,
+            "data2": 3,
+            "data3": 0
+        },
+        "player3TeamTag": "",
+        "player3Flag": 0,
+        "player3PaintJob": 0,
+        "player4Name": "Player 4",
+        "player4Color": {
+            "data1": 1,
+            "data2": 4,
+            "data3": 0
+        },
+        "player4TeamTag": "",
+        "player4Flag": 0,
+        "player4PaintJob": 0
+    },
+    "AI": {
+        "aiFill": 0,
+        "useDebugAIWithoutDrivingLines": false,
+        "aiSkill": 2,
+        "aiSkillLevel1": 3,
+        "aiSkillLevel2": 1,
+        "aiSkillLevel2Percentage": 50,
+        "shuffleOrder": true,
+        "humanStartPosition": 1,
+        "forcedStartPosition": 20,
+        "forceVehicleSelection": false,
+        "forcedAIVehicle": 0,
+        "forcedHumanVehicle": 0,
+        "triggerHappiness": 50,
+        "deterministicRandom": false,
+        "randomSeed": 0,
+        "forceAIClanTag": false,
+        "aiClanTag": "AI"
+    },
+    "QuickGame": {
+        "vehicle": 0,
+        "aiFill": 20,
+        "aiSkill": 2,
+        "events": 3,
+        "laps": 3,
+        "firstEventStartPosition": 3,
+        "startingOrderAfterFirst": 1,
+        "ghostRace": false,
+        "draftingOn": false,
+        "weapons": 0,
+        "minMissileReloadTime": 2
+    },
+    "client": {
+        "method": 0,
+        "address": "",
+        "host": 0,
+        "port": 7755,
+        "lobby": 0,
+        "spectator": false
+    },
+    "host": {
+        "discoverability": 0,
+        "serverName": "#3 TripleHeat",
+        "setup": "tsudaily",
+        "info": "No registration - Every Fri 9pm CET",
+        "welcomeMessage": "This server has no admins, everything runs automatically. tsura.org/elo_heat",
+        "passwordRequired": false,
+        "password": "december",
+        "maxPlayers": 20,
+        "spectatorsAllowed": 5,
+        "hostAsSpectator": false,
+        "continuousJoining": true,
+        "remoteAdmins": [
+            76561197989276622,
+            76561198131829686,
+            76561198096169747
+        ],
+        "bannedPlayers": {
+            "entries": []
+        },
+        "aiLatency": 4,
+        "forceAISupportedLevels": 0,
+        "automaticVehicleChanging": false,
+        "automaticVehicleRules": {
+            "automaticVehicleLevelList1": "",
+            "automaticVehicle1": {
+                "m_guid": {
+                    "a": 0,
+                    "b": 0
+                }
+            },
+            "automaticVehicleLevelList2": "",
+            "automaticVehicle2": {
+                "m_guid": {
+                    "a": 0,
+                    "b": 0
+                }
+            },
+            "automaticVehicleLevelList3": "",
+            "automaticVehicle3": {
+                "m_guid": {
+                    "a": 0,
+                    "b": 0
+                }
+            },
+            "automaticVehicleLevelList4": "",
+            "automaticVehicle4": {
+                "m_guid": {
+                    "a": 0,
+                    "b": 0
+                }
+            },
+            "automaticVehicleLevelList5": "",
+            "automaticVehicle5": {
+                "m_guid": {
+                    "a": 0,
+                    "b": 0
+                }
+            }
+        },
+        "connection": {
+            "method": 0,
+            "publicIP": "",
+            "publicPort": 7755
+        },
+        "timer": {
+            "timerOn": false,
+            "sessionInitTime": 45,
+            "minSessionInitTime": 25,
+            "eventInitTime": 45,
+            "levelLoadingTime": 45,
+            "vehicleSetupTime": 30,
+            "waitingStartTime": 5,
+            "eventRunningIdleTime": 60,
+            "sessionEndTime": 25,
+            "sessionIdleAbortTime": 120,
+            "restartSession": true,
+            "startWhenEveryoneReady": true
+        },
+        "commands": {
+            "automaticScripts": true,
+            "generateStatsFiles": true,
+            "generateDetailsLog": false,
+            "nonAdminsMuted": false,
+            "spectatorsMuted": false
+        },
+        "voting": {
+            "setupVotingOn": false,
+            "votingOn": false,
+            "votingOnAtSessionInit": false,
+            "votingOnAtEventInit": false,
+            "oneVoteEnoughOnlyAlone": true,
+            "resetVotedValues": true,
+            "vehicleVotingOn": false,
+            "lapsVotingOn": false,
+            "maxVotingLaps": 20,
+            "contactRulesVotingOn": false,
+            "abortVotingOn": true
+        },
+        "lobbyRetryInterval": 60,
+        "lobbyKeepaliveInterval": 120
+    }
+}

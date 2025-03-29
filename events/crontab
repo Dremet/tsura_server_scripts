@@ -1,0 +1,1 @@
+0 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1

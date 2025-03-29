@@ -1,0 +1,4 @@
+0 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
+59 19 * * 5 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py announce_1_minute
+00 20 * * 5 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py start_session
+00 21 * * 5 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py skip_to_new_session

@@ -1,0 +1,1 @@
+/cmd move_raw_files.sh >log 2>&1

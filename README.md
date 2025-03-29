@@ -1,2 +1,3 @@
-# tsura_server_scripts
-Collection of scripts used on dedicated servers for Turbo Sliders Unlimited within the TSURA community
+# TSURA Server Scripts
+
+Collection of scripts used on dedicated servers for Turbo Sliders Unlimited within the TSURA community, see https://tsura.org
