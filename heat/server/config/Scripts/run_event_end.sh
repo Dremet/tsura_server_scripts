@@ -13,7 +13,7 @@ SESSION_STATS_FILE="./sessionstats.json"
 CURRENT_TIMESTAMP=$(date "+%Y%m%d_%H%M%S")
 
 # Directory where the file should be moved
-DEST_DIR="/home/data/heat/${CURRENT_TIMESTAMP}/raw"
+DEST_DIR="/home/data/heats/${CURRENT_TIMESTAMP}/raw"
 
 # Ensure the target directory exists
 mkdir -p "$DEST_DIR"
