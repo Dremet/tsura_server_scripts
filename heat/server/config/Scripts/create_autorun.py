@@ -16,7 +16,7 @@ TRACKS = [
     ("Japanese GP v2.13", 1),
     ("Balaton Park Circuit v1.01", 1),
     ("Hockenheimring GP v1.42", 1),
-    ("Motorsport Arena Oschersleben v1", 1),
+    ("Motorsport Arena Oschersleben v2", 1),
     ("National Racetrack Monza v1.5", 1),
     ("Nanoli Full Circuit v1.4", 1),
     ("TT Circuit Assen V1.7", 1),
