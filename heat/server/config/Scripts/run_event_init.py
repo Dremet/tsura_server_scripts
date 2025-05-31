@@ -9,12 +9,12 @@ QUALI_MAX_MINUTES = 3
 # QUALI_TIRES = 800
 
 # RACE
-race_laps = random.randint(8, 9)
+race_laps = random.randint(8, 10)
 RACE_MAX_MINUTES = 1440
 # generate random fuel consumption
 # the bigger the value, the longer the stints
-fuel = random.randint(230, 625)
-tires = random.randint(500, 1600)
+fuel = random.randint(230, 675)  # random.randint(230, 625)
+tires = random.randint(500, 1700)  # random.randint(500, 1600)
 
 
 ### HELPER ###
