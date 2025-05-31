@@ -13,6 +13,10 @@ DEST_DIR="/home/data/hotlapping/${CURRENT_TIMESTAMP}/raw"
 # Stelle sicher, dass das Zielverzeichnis existiert
 mkdir -p "$DEST_DIR"
 
+# make sure data user can access the files and create subdirectories
+chgrp -R tsu "$DEST_DIR"
+chmod -R 774 "$DEST_DIR"
+
 # Versuche, den Streckennamen aus der JSON-Datei zu extrahieren
 TRACK_NAME=$(jq -r '.level.name // empty' "$EVENT_STATS_FILE" 2>/dev/null | tr -d ' ')
 
@@ -46,7 +50,3 @@ echo "Session Stats Datei erfolgreich verschoben nach: $DEST_DIR/$SESSION_FILE_N
 
 # trigger for data pipeline
 cat "$DEST_DIR" > /home/data/new_hotlapping_files.trigger
-
-# Now save to database
-# cd ~/tsu_analyzer
-# /home/steam/.local/bin/pdm run python run.py "$DEST_DIR/$EVENT_FILE_NAME" &

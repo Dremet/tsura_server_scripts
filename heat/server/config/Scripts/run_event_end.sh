@@ -18,6 +18,10 @@ DEST_DIR="/home/data/heats/${CURRENT_TIMESTAMP}/raw"
 # Ensure the target directory exists
 mkdir -p "$DEST_DIR"
 
+# make sure data user can access the files and create subdirectories
+chgrp -R tsu "$DEST_DIR"
+chmod -R 774 "$DEST_DIR"
+
 # Check if "hotlapping": true exists in the event stats file
 if grep -q '"hotlapping": true' "$EVENT_STATS_FILE"; then
   echo "Hotlapping mode detected. Removing event stats and session stats files."
