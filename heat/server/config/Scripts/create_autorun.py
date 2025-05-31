@@ -11,7 +11,7 @@ NUMBER_TRACKS = 3
 TRACKS = [
     ("Circuit of the Americas v1.031", 1),
     ("Sepang Circuit V2.02", 1),
-    ("Barcelona GP - Catalunya v1.06", 1),
+    ("Barcelona GP - Catalunya v1.1", 1),
     ("Silverstone Circuit V1.05", 1),
     ("Japanese GP v2.13", 1),
     ("Balaton Park Circuit v1.01", 1),
@@ -24,9 +24,12 @@ TRACKS = [
     ("Watkins Glen International v1.3", 1),
     ("Spa Francorchamps GP v3.12", 1),
     ("Hungaroring V2.04", 1),
-    ("Canadian GP v1.12", 1),
+    ("Canadian GP v1.13", 1),
     ("Australian GP v1.16", 1),
     ("Daytona Road Course V2.01", 1),
+    ("Brazilian GP v1.0", 1),
+    ("Raijin Mountain Circuit v1.00nsd", 1),
+    ("Circuit Zandvoort V1.01", 1),
 ]
 
 VEHICLES = [
