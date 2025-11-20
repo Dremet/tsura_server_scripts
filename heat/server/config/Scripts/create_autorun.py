@@ -9,10 +9,10 @@ import random
 NUMBER_TRACKS = 3
 
 TRACKS = [
-    ("Circuit of the Americas v1.031", 1),
+    ("Circuit of the Americas v1.043", 1),
     ("Sepang Circuit V2.02", 1),
     ("Barcelona GP - Catalunya v1.1", 1),
-    ("Silverstone Circuit V1.05", 1),
+    ("Silverstone Circuit V1.07", 1),
     ("Japanese GP v2.13", 1),
     ("Balaton Park Circuit v1.01", 1),
     ("Hockenheimring GP v1.42", 1),
@@ -21,15 +21,24 @@ TRACKS = [
     ("Nanoli Full Circuit v1.4", 1),
     ("TT Circuit Assen V1.7", 1),
     ("Elethasia Island Circuit v1.01", 1),
-    ("Watkins Glen International v1.3", 1),
-    ("Spa Francorchamps GP v3.12", 1),
+    ("Watkins Glen International v1.5", 1),
+    ("Spa Francorchamps GP v3.22", 1),
     ("Hungaroring V2.04", 1),
-    ("Canadian GP v1.13", 1),
+    ("Canadian GP v1.23", 1),
     ("Australian GP v1.16", 1),
     ("Daytona Road Course V2.01", 1),
-    ("Brazilian GP v1.0", 1),
+    ("Brazilian GP v1.04", 1),
     ("Raijin Mountain Circuit v1.00nsd", 1),
-    ("Circuit Zandvoort V1.01", 1),
+    ("Circuit Zandvoort V1.03", 1),
+    ("Circuit Zolder v1.03", 1),
+    ("Imola GP v1.16", 1),
+    ("RedBull Ring GP v1.40", 1),
+    ("Monaco GP v1.03", 1),
+    ("Long Beach Circuit v1.1", 1),
+    ("Road America V2.0", 1),
+    ("Shanghai Circuit V2.01", 1),
+    ("Laguna Seca Raceway v1.5", 1),
+    ("Miami GP v1.02", 1),
 ]
 
 VEHICLES = [
