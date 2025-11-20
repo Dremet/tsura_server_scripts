@@ -15,8 +15,8 @@ DEST_DIR="/home/data/events/${CURRENT_TIMESTAMP}/raw"
 mkdir -p "$DEST_DIR"
 
 # make sure data user can access the files and create subdirectories
-chgrp -R tsu "$DEST_DIR"
-chmod -R 774 "$DEST_DIR"
+chgrp -R tsu "$DEST_DIR/.."
+chmod -R 774 "$DEST_DIR/.."
 
 # Versuche, den Streckennamen aus der JSON-Datei zu extrahieren
 TRACK_NAME=$(jq -r '.level.name // empty' "$EVENT_STATS_FILE" 2>/dev/null | tr -d ' ')
