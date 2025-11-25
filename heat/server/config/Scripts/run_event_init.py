@@ -2,19 +2,36 @@ import os
 import random
 
 ### SETUP
+
+CARS = [
+    ("Hawk v3", 1),
+    ("Countach 5k QV v1", 1),
+    ("F3-Proto-R", 1),
+    ("Opel Kadett 2.0", 1),
+    ("LMP1 v2", 1),
+    ("Buick GNX-JB GrT", 1),
+    ("F_Xtreme 2", 1),
+    ("Honda NSX GT3", 1),
+]
+
 # QUALI
-QUALI_LAPS = 1
-QUALI_MAX_MINUTES = 3
+QUALI_LAPS = 2
+QUALI_MAX_MINUTES = 5
 # QUALI_FUEL = 500
 # QUALI_TIRES = 800
 
 # RACE
-race_laps = random.randint(8, 10)
-RACE_MAX_MINUTES = 1440
+RACE_LAPS = 500
+RACE_MAX_MINUTES = 11
 # generate random fuel consumption
 # the bigger the value, the longer the stints
-fuel = random.randint(230, 675)  # random.randint(230, 625)
-tires = random.randint(500, 1700)  # random.randint(500, 1600)
+fuel = random.randint(500, 700)  # random.randint(230, 625)
+tires = random.randint(700, 1700)  # random.randint(500, 1600)
+
+number_compounds = random.randint(1, 2)
+
+if number_compounds == 2:
+    soft_tires = round(tires / 2, 0)
 
 
 ### HELPER ###
@@ -34,11 +51,34 @@ def is_next_event_quali():
     return exists
 
 
+def select_random_elements_with_weights(cars_with_weights, n=1):
+    """
+    Select `n` random elements from a list of (element, weight) tuples with weighted probabilities.
+    Elements with lower weights are less likely to be selected.
+    """
+    if n > len(cars_with_weights):
+        raise ValueError("n cannot be greater than the length of the list.")
+
+    # Split the list of tuples into separate lists for items and weights
+    items, weights = zip(*cars_with_weights)
+
+    # Use random.choices with weights to bias selection
+    selected = random.choices(items, weights=weights, k=n)
+
+    # Ensure unique selections (if duplicates occur, reselect)
+    while len(set(selected)) < n:
+        selected = random.choices(items, weights=weights, k=n)
+
+    return selected
+
+
 ### MAIN ###
 
 quali = is_next_event_quali()
 print(quali)
 if quali:
+    car = select_random_elements_with_weights(CARS, 1)[0]
+
     commands = [
         "/broadcast Setting up Qualifying",
         "/race.raceMode = Hotlapping",
@@ -48,6 +88,8 @@ if quali:
         "/race.ContactRules = EqualGhosts",
         "/fuel.fuelOn = 0",
         "/tireWear.tireWearOn = 0",
+        "/vehicles /clear",
+        "/vehicles /add '{car}'",
         # f"/fuelFullGasTime = {QUALI_FUEL}",
         # f"/tireWear.compound1Endurance = {QUALI_TIRES}",
         "/broadcast Hotlapping now, even if the User Interface might show different",
@@ -56,16 +98,29 @@ else:
     commands = [
         "/broadcast Setting up Race",
         "/race.raceMode = Race",
-        f"/race.maxLaps = {race_laps}",
+        f"/race.maxLaps = {RACE_LAPS}",
         f"/race.maxMinutes = {RACE_MAX_MINUTES}",
         "/race.startStyle = Random",
         "/race.ContactRules = Normal",
         "/fuel.fuelOn = 1",
         "/tireWear.tireWearOn = 1",
         f"/fuelFullGasTime = {fuel}",
-        f"/tireWear.compound1Endurance = {tires}",
-        "/broadcast Race now, even if the User Interface might show different",
     ]
+
+    if number_compounds == 1:
+        commands.append(f"/tireWear.tireCompoundCount = 1")
+        commands.append(f"/tireWear.compound1Endurance = {tires}")
+        commands.append(f"/tireWear.compound1InitialPerformance = 100")
+    else:
+        commands.append(f"/tireWear.tireCompoundCount = 2")
+        commands.append(f"/tireWear.compound1Endurance = {soft_tires}")
+        commands.append(f"/tireWear.compound1InitialPerformance = 100")
+        commands.append(f"/tireWear.compound2Endurance = {tires}")
+        commands.append(f"/tireWear.compound2InitialPerformance = 88")
+
+    commands.append(
+        "/broadcast Race now, even if the User Interface might show different"
+    )
 
 
 print(commands)
