@@ -55,6 +55,16 @@ def get_tire_deg_desc(deg):
         return "Low"
 
 
+def get_fuel_cons_desc(cons):
+    """Get a description string for fuel consumption value."""
+    if cons < 566:
+        return "Below Average"
+    elif cons < 633:
+        return "Moderate"
+    else:
+        return "Above Average"
+
+
 def is_next_event_quali():
     """
     Checks if a file called 'next_event_is_quali' exists,
@@ -130,6 +140,7 @@ else:
     ]
 
     desc_tire_deg = get_tire_deg_desc(tire_deg)
+    desc_fuel_cons = get_fuel_cons_desc(fuel)
 
     if number_compounds == 1:
         commands.append(f"/tireWear.tireCompoundCount = 1")
@@ -151,6 +162,7 @@ else:
         commands.append(f"/tireWear.compound2InitialPerformance = 88")
 
     commands.append(
+        "/broadcast Fuel Consumption: {desc_fuel_cons} ({fuel})"
         "/broadcast Race now, even if the User Interface might show different"
     )
 
