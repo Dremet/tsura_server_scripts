@@ -161,10 +161,10 @@ else:
         )
         commands.append(f"/tireWear.compound2InitialPerformance = 88")
 
-    commands.append(
+    commands += [
         f"/broadcast Fuel Consumption: {desc_fuel_cons} ({fuel})",
         "/broadcast Race now, even if the User Interface might show different",
-    )
+    ]
 
 
 print(commands)
