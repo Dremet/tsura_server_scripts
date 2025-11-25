@@ -139,15 +139,14 @@ else:
     else:
         desc_soft_tire_deg = get_tire_deg_desc(soft_tire_deg)
         commands.append(f"/tireWear.tireCompoundCount = 2")
-        commands.append(f"{soft_tire_deg} {tire_deg}")
         commands.append(f"/tireWear.compound1Endurance = {soft_tire_deg}")
         commands.append(
-            f"/broadcast Degradation of Tire Compound 1 (Soft): {desc_soft_tire_deg}"
+            f"/broadcast Degradation of Tire Compound 1 (Soft): {desc_soft_tire_deg} ({soft_tire_deg}) with 100 initial performance."
         )
         commands.append(f"/tireWear.compound1InitialPerformance = 100")
         commands.append(f"/tireWear.compound2Endurance = {tire_deg}")
         commands.append(
-            f"/broadcast Degradation of Tire Compound 2 (Medium): {desc_tire_deg}"
+            f"/broadcast Degradation of Tire Compound 2 (Medium): {desc_tire_deg} ({tire_deg}) with 88 initial performance."
         )
         commands.append(f"/tireWear.compound2InitialPerformance = 88")
 
