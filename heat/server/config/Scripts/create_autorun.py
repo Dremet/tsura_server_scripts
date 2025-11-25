@@ -16,7 +16,7 @@ TRACKS = [
     ("Singapore Street Circuit v1.1", 1),
     ("Testing Sebring v1.2", 1),
     ("Taupo Motorsport Park T1 v1.0.0", 1),
-    ("Tomula GP v1.03", 1),
+    ("Tomula GP v2.01", 1),
     ("Jäädytetty Indeksi - Club Layout", 1),
     ("Sachsenring GP Circuit v1.2", 1),
     ("Il Giro (short) v5.0", 1),
