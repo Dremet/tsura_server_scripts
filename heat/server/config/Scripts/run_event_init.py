@@ -6,7 +6,7 @@ import random
 CARS = [
     ("Hawk v3", 1),
     ("Countach 5k QV v1", 1),
-    ("F3-Proto-R", 1),
+    ("F3 Proto-R", 1),
     ("Opel Kadett 2.0", 1),
     ("LMP1 v2", 1),
     ("Buick GNX-JB GrT", 1),
@@ -26,15 +26,35 @@ RACE_MAX_MINUTES = 11
 # generate random fuel consumption
 # the bigger the value, the longer the stints
 fuel = random.randint(500, 700)  # random.randint(230, 625)
-tires = random.randint(700, 1700)  # random.randint(500, 1600)
+tire_deg = random.randint(700, 1700)  # random.randint(500, 1600)
 
 number_compounds = random.randint(1, 2)
 
 if number_compounds == 2:
-    soft_tires = round(tires / 2, 0)
+    soft_tire_deg = int(round(tire_deg / 2, 0))
 
 
 ### HELPER ###
+
+
+def get_tire_deg_desc(deg):
+    """Get a description string for tire degradation value."""
+    if deg < 500:
+        return "Extremely High!"
+    elif deg < 700:
+        return "Very High"
+    elif deg < 950:
+        return "High"
+    elif deg < 1100:
+        return "Above Average"
+    elif deg < 1300:
+        return "Moderate"
+    elif deg < 1500:
+        return "Below Average"
+    else:
+        return "Low"
+
+
 def is_next_event_quali():
     """
     Checks if a file called 'next_event_is_quali' exists,
@@ -89,9 +109,10 @@ if quali:
         "/fuel.fuelOn = 0",
         "/tireWear.tireWearOn = 0",
         "/vehicles /clear",
-        "/vehicles /add '{car}'",
+        f"/vehicles /add '{car}'",
         # f"/fuelFullGasTime = {QUALI_FUEL}",
         # f"/tireWear.compound1Endurance = {QUALI_TIRES}",
+        f"/broadcast Selected car: {car}",
         "/broadcast Hotlapping now, even if the User Interface might show different",
     ]
 else:
@@ -105,17 +126,29 @@ else:
         "/fuel.fuelOn = 1",
         "/tireWear.tireWearOn = 1",
         f"/fuelFullGasTime = {fuel}",
+        f"/broadcast Number of tire compounds: {number_compounds}",
     ]
+
+    desc_tire_deg = get_tire_deg_desc(tire_deg)
 
     if number_compounds == 1:
         commands.append(f"/tireWear.tireCompoundCount = 1")
-        commands.append(f"/tireWear.compound1Endurance = {tires}")
+        commands.append(f"/tireWear.compound1Endurance = {tire_deg}")
         commands.append(f"/tireWear.compound1InitialPerformance = 100")
+
     else:
+        desc_soft_tire_deg = get_tire_deg_desc(soft_tire_deg)
         commands.append(f"/tireWear.tireCompoundCount = 2")
-        commands.append(f"/tireWear.compound1Endurance = {soft_tires}")
+        commands.append(f"{soft_tire_deg} {tire_deg}")
+        commands.append(f"/tireWear.compound1Endurance = {soft_tire_deg}")
+        commands.append(
+            f"/broadcast Degradation of Tire Compound 1 (Soft): {desc_soft_tire_deg}"
+        )
         commands.append(f"/tireWear.compound1InitialPerformance = 100")
-        commands.append(f"/tireWear.compound2Endurance = {tires}")
+        commands.append(f"/tireWear.compound2Endurance = {tire_deg}")
+        commands.append(
+            f"/broadcast Degradation of Tire Compound 2 (Medium): {desc_tire_deg}"
+        )
         commands.append(f"/tireWear.compound2InitialPerformance = 88")
 
     commands.append(
