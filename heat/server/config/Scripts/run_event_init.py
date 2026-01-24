@@ -39,6 +39,15 @@ def is_next_event_quali():
 quali = is_next_event_quali()
 print(quali)
 if quali:
+    point_commands = [
+        "/points.position1 = 3",
+        "/points.position2 = 2",
+        "/points.position3 = 1",
+    ]
+
+    for i in range(4, 21):
+        point_commands.append(f"/points.position{i} = 0")
+
     commands = [
         "/broadcast Setting up Qualifying",
         "/race.raceMode = Hotlapping",
@@ -52,7 +61,25 @@ if quali:
         # f"/tireWear.compound1Endurance = {QUALI_TIRES}",
         "/broadcast Hotlapping now, even if the User Interface might show different",
     ]
+
+    commands = point_commands + commands
 else:
+    point_commands = [
+        "/points.position1 = 20",
+        "/points.position2 = 16",
+        "/points.position3 = 13",
+        "/points.position4 = 10",
+        "/points.position5 = 8",
+        "/points.position6 = 6",
+        "/points.position7 = 4",
+        "/points.position8 = 3",
+        "/points.position9 = 2",
+        "/points.position10 = 1",
+    ]
+
+    for i in range(11, 21):
+        point_commands.append(f"/points.position{i} = 0")
+
     commands = [
         "/broadcast Setting up Race",
         "/race.raceMode = Race",
@@ -66,6 +93,8 @@ else:
         f"/tireWear.compound1Endurance = {tires}",
         "/broadcast Race now, even if the User Interface might show different",
     ]
+
+    commands = point_commands + commands
 
 
 print(commands)

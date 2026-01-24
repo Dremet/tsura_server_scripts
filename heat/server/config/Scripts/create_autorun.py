@@ -35,7 +35,7 @@ TRACKS = [
     ("RedBull Ring GP v1.40", 1),
     ("Monaco GP v1.03", 1),
     ("Long Beach Circuit v1.1", 1),
-    ("Road America V2.0", 1),
+    ("Road America V2.02", 1),
     ("Shanghai Circuit V2.01", 1),
     ("Laguna Seca Raceway v1.5", 1),
     ("Miami GP v1.02", 1),
