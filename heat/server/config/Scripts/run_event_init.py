@@ -6,12 +6,17 @@ import random
 CARS = [
     ("Hawk v3", 1),
     ("Countach 5k QV v1", 1),
-    ("F3 Proto-R", 1),
+    ("F3 Proto-R v2", 1),
     ("Opel Kadett 2.0", 1),
     ("LMP1 v2", 1),
     ("Buick GNX-JB GrT", 1),
     ("F_Xtreme 2", 1),
     ("Honda NSX GT3", 1),
+    ("McSimCadeR v3", 1),
+    ("Ford MustangGT V8 v3", 1),
+    ("Porsche 911 GT2", 1),
+    ("Tourist Car", 1),
+    ("Vost 1.1", 1),
 ]
 
 # QUALI
@@ -22,11 +27,11 @@ QUALI_MAX_MINUTES = 5
 
 # RACE
 RACE_LAPS = 500
-RACE_MAX_MINUTES = 11
+RACE_MAX_MINUTES = 8
 # generate random fuel consumption
 # the bigger the value, the longer the stints
-fuel = random.randint(500, 700)  # random.randint(230, 625)
-tire_deg = random.randint(700, 1700)  # random.randint(500, 1600)
+fuel = random.randint(180, 450)  # random.randint(230, 625)
+tire_deg = random.randint(500, 1300)  # random.randint(500, 1600)
 
 number_compounds = random.randint(1, 2)
 
@@ -39,17 +44,17 @@ if number_compounds == 2:
 
 def get_tire_deg_desc(deg):
     """Get a description string for tire degradation value."""
-    if deg < 500:
+    if deg < 350:
         return "Extremely High!"
-    elif deg < 700:
+    elif deg < 550:
         return "Very High"
-    elif deg < 950:
+    elif deg < 700:
         return "High"
-    elif deg < 1100:
+    elif deg < 850:
         return "Above Average"
-    elif deg < 1300:
+    elif deg < 1000:
         return "Moderate"
-    elif deg < 1500:
+    elif deg < 1150:
         return "Below Average"
     else:
         return "Low"
@@ -57,12 +62,12 @@ def get_tire_deg_desc(deg):
 
 def get_fuel_cons_desc(cons):
     """Get a description string for fuel consumption value."""
-    if cons < 566:
-        return "Below Average"
-    elif cons < 633:
+    if cons < 270:
+        return "Above Average"
+    elif cons < 360:
         return "Moderate"
     else:
-        return "Above Average"
+        return "Below Average"
 
 
 def is_next_event_quali():
@@ -109,6 +114,15 @@ print(quali)
 if quali:
     car = select_random_elements_with_weights(CARS, 1)[0]
 
+    point_commands = [
+        "/points.position1 = 3",
+        "/points.position2 = 2",
+        "/points.position3 = 1",
+    ]
+
+    for i in range(4, 21):
+        point_commands.append(f"/points.position{i} = 0")
+
     commands = [
         "/broadcast Setting up Qualifying",
         "/race.raceMode = Hotlapping",
@@ -125,7 +139,25 @@ if quali:
         f"/broadcast Selected car: {car}",
         "/broadcast Hotlapping now, even if the User Interface might show different",
     ]
+
+    commands = point_commands + commands
 else:
+    point_commands = [
+        "/points.position1 = 20",
+        "/points.position2 = 16",
+        "/points.position3 = 13",
+        "/points.position4 = 10",
+        "/points.position5 = 8",
+        "/points.position6 = 6",
+        "/points.position7 = 4",
+        "/points.position8 = 3",
+        "/points.position9 = 2",
+        "/points.position10 = 1",
+    ]
+
+    for i in range(11, 21):
+        point_commands.append(f"/points.position{i} = 0")
+
     commands = [
         "/broadcast Setting up Race",
         "/race.raceMode = Race",
@@ -138,6 +170,8 @@ else:
         f"/fuelFullGasTime = {fuel}",
         f"/broadcast Number of tire compounds: {number_compounds}",
     ]
+
+    commands = point_commands + commands
 
     desc_tire_deg = get_tire_deg_desc(tire_deg)
     desc_fuel_cons = get_fuel_cons_desc(fuel)

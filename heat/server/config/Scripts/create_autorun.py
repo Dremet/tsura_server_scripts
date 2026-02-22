@@ -6,7 +6,7 @@ import random
 
 ### CONSTANTS ###
 
-NUMBER_TRACKS = 3
+NUMBER_TRACKS = 4
 
 TRACKS = [
     ("Bilster Berg v1.01", 1),
@@ -24,6 +24,12 @@ TRACKS = [
     ("Rosenholm Circuit", 1),
     ("Donnington Park (Prewar) v2", 1),
     ("Hassain Sula GP v1.00", 1),
+    ("Bristol (Road Course) v1.2", 1),
+    ("Nordschleife.zip v1.1", 1),
+    ("VSR-Homeland V1.5", 1),
+    ("CSup - Lost Lagoons v1", 1),
+    ("Buffalo Hill - Rallycross v1.0", 1),
+    ("Bristol Motor Speedway v1.0", 1),
 ]
 
 
