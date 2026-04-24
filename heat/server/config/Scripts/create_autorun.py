@@ -30,6 +30,13 @@ TRACKS = [
     ("CSup - Lost Lagoons v1", 1),
     ("Buffalo Hill - Rallycross v1.0", 1),
     ("Bristol Motor Speedway v1.0", 1),
+    ("Il Giro (full) v5.0", 1),
+    ("Castle Combe Circuit V1.00", 1),
+    ("Nashville Music City GP v1.02", 1),
+    ("Queensland Raceway V1.00", 1),
+    ("Norisring v1.03", 1),
+    ("Lime Rock Park V2.00", 1),
+    ("Candyville Sfinx v1.3", 1),
 ]
 
 
