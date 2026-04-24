@@ -13,7 +13,7 @@ CARS = [
     ("F_Xtreme 2", 1),
     ("Honda NSX GT3", 1),
     ("McSimCadeR v3", 1),
-    ("Ford MustangGT V8 v3", 1),
+    ("Ford MustangGT V8 v4", 1),
     ("Porsche 911 GT2", 1),
     ("Tourist Car", 1),
     ("Vost 1.1", 1),
