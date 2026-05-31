@@ -9,7 +9,7 @@ SESSION_STATS_FILE="./sessionstats.json"
 CURRENT_TIMESTAMP=$(date "+%Y%m%d_%H%M%S")
 
 # Zielverzeichnis auf dem carrot-Datenserver
-DEST_DIR="/home/data/heats/${CURRENT_TIMESTAMP}/raw"
+DEST_DIR="/home/data/tripleheat/${CURRENT_TIMESTAMP}/raw"
 
 mkdir -p "$DEST_DIR"
 
@@ -49,4 +49,4 @@ mv "$SESSION_STATS_FILE"       "$DEST_DIR/$SESSION_FILE_NAME"
 echo "Moved: $DEST_DIR/$SESSION_FILE_NAME"
 
 # Trigger für die Pipeline auf carrot
-cat "$DEST_DIR" > /home/data/new_heat_files.trigger
+echo "$DEST_DIR" > /home/data/new_tripleheat_files.trigger
