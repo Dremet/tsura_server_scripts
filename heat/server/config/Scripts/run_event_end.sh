@@ -13,7 +13,7 @@ SESSION_STATS_FILE="./sessionstats.json"
 CURRENT_TIMESTAMP=$(date "+%Y%m%d_%H%M%S")
 
 # Directory where the file should be moved
-DEST_DIR="/home/data/heats/${CURRENT_TIMESTAMP}/raw"
+DEST_DIR="/home/data/tripleheat/${CURRENT_TIMESTAMP}/raw"
 
 # Ensure the target directory exists
 mkdir -p "$DEST_DIR"
@@ -69,4 +69,4 @@ mv "$SESSION_STATS_FILE" "$DEST_DIR/$SESSION_FILE_NAME"
 echo "Session stats file successfully moved to: $DEST_DIR/$SESSION_FILE_NAME"
 
 # trigger for data pipeline
-cat "$DEST_DIR" > /home/data/new_heat_files.trigger
+cat "$DEST_DIR" > /home/data/new_tripleheat_files.trigger
