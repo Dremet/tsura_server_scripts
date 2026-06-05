@@ -1,2 +1,2 @@
-/cmd run_event_end.sh
+/cmd run_event_end.sh >event_end.log 2>&1
 /src event_end_generated.src
