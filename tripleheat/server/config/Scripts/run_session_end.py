@@ -1,6 +1,6 @@
 
 commands = [
-    "/broadcast Session has ended for today, see you next time! Visit https://tsura.org/elo_heat for elo ranking",
+    "/broadcast Session has ended for today, see you next time! Visit https://tsura.org/elo-heats for elo ranking",
     "/timerOn = False",
 ]
 
