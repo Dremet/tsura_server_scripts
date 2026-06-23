@@ -491,7 +491,7 @@
         "commands": {
             "automaticScripts": true,
             "generateStatsFiles": true,
-            "generateDetailsLog": false,
+            "generateDetailsLog": true,
             "nonAdminsMuted": false,
             "spectatorsMuted": false
         },
