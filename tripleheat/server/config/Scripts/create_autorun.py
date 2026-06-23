@@ -14,7 +14,7 @@ TRACKS = [
     ("Bikernieki (HSR) v1.0 R", 1),
     ("Suzuka (East Circuit) v1 R", 1),
     ("Lime Rock Park GP V2.02", 1),
-    # ("Buriram Intl. Circuit V1.00", 1), add again when going offtrack isnt so profitable anymore
+    ("Buriram Intl. Circuit V1.01", 1),
     ("Circuit Zandvoort V1.04", 1),
     ("Brands Hatch GP Circuit V2.01", 1),
     ("Mexico City Eprix 2026 V1.00", 1),
