@@ -1,0 +1,351 @@
+{
+ "ContactProperties": {
+  "bounciness": [
+   "Bounciness in collisions."
+  ],
+  "staticFriction": [
+   "Static friction."
+  ],
+  "dynamicFriction": [
+   "Dynamic friction."
+  ],
+  "bounceCombine": [
+   "The preferred method of combining bounciness between two materials.\nPrecedence in case two objects have a different combine function: Maximum, Multiply, Minimum, Average."
+  ],
+  "frictionCombine": [
+   "The preferred method of combining friction between two materials.\nPrecedence in case two objects have a different combine function: Maximum, Multiply, Minimum, Average."
+  ]
+ },
+ "CarPhysicsProperties": {
+  "weight": [
+   "Mass and weight related properties."
+  ],
+  "contact": [
+   "Properties related to car body making contact with other objects."
+  ],
+  "speed": [
+   "Speed and acceleration related properties."
+  ],
+  "braking": [
+   "Braking properties."
+  ],
+  "steering": [
+   "Steering properties."
+  ],
+  "oversteering": [
+   "Oversteering properties, modify to control when car starts sliding."
+  ],
+  "sliding": [
+   "Sliding properties."
+  ],
+  "spring": [
+   "Spring related properties."
+  ],
+  "downforce": [
+   "Properties defining how downforce and spring state affect properties like braking and grip."
+  ],
+  "weightTransfer": [
+   "Properties defining how much there is weight transfer (torque for physical body)."
+  ]
+ },
+ "WeightProperties": {
+  "mass": [
+   "Mass of the vehicle [kg].\nThis affects collisions only. E.g. acceleration, gravity and springs are not affected by mass."
+  ],
+  "massY": [
+   "How much above wheels the center of mass is [m].\nThe smaller the value is the harder it is to tip over."
+  ],
+  "massZ": [
+   "How much towards front (or back) the center of mass is [m]."
+  ],
+  "gravity": [
+   "Gravity [m/s<sup>2</sup>].\n10 is \"realistic\" but 20 suits better arcadeish top-down racing."
+  ]
+ },
+ "SpeedProperties": {
+  "maxSpeed": [
+   "Maximum speed in km/h on default tarmac."
+  ],
+  "viscosity": [
+   "Viscosity, causes slow-down based on speed (deceleration = speed * viscosity).\nBase acceleration = max speed x viscosity, so increasing viscosity also increases acceleration."
+  ],
+  "acceleration": [
+   "Initial acceleration multiplier. Like viscosity, affects how quickly to get to the max speed,\nbut without the slowdown effect of viscosity.\n1 for uniform acceleration at every speed, limited only by viscosity."
+  ],
+  "reverseMultiplier": [
+   "Multiplier for reverse acceleration.\n"
+  ],
+  "flyingViscosity": [
+   "Viscosity when flying."
+  ]
+ },
+ "BrakingProperties": {
+  "braking": [
+   "Braking deceleration [m/s<sup>2</sup>]."
+  ],
+  "parkBraking": [
+   "How much braking deceleration there is when not accelerating or braking at slow speed. [m/s<sup>2</sup>]\n Without this, car will start slowly moving downhill when not doing anything."
+  ],
+  "parkSpeed": [
+   "Speed at which parking force starts taking effect."
+  ],
+  "complexLocking": [
+   "Whether the more complex brake locking logic is activated.\nEnable to control when brakes are locked (smoke coming) and how it affects physics."
+  ],
+  "lockingStartTime": [
+   "How long to do max braking before brakes are locked and smoke starts coming out."
+  ],
+  "cooldownMultiplier": [
+   "How much quicker the brake cooldown happens compared to getting locked.\nWith high values, even a small non-braking time resets the locking timer.\nWith 1, resetting the timer takes as long as the time to cause locking."
+  ],
+  "lockedBrakeMultiplier": [
+   "When the brakes are locked, braking deceleration is multiplied by this."
+  ],
+  "lockedGripMultiplier": [
+   "When the brakes are locked, the grip is multiplied by this."
+  ]
+ },
+ "SlidingProperties": {
+  "slidingAngle": [
+   "When slip angle (angle difference of velocity and forward) is more than this (in degrees), car is sliding."
+  ],
+  "gradualRange": [
+   "If non-zero, sliding effects gradually increase based on the extent\nto which the slip angle exceeds the sliding angle.\nFull effect at sliding angle + gradual range."
+  ],
+  "gradualGrip": [
+   "If true, grip starts getting worse before sliding starts (multiplied by cos(slipAngle)).\nIf false, grip stays the same until sliding starts."
+  ],
+  "slideBraking": [
+   "Braking deceleration when sliding [m/s<sup>2</sup>]."
+  ],
+  "deprecatedSlideDeceleration": [
+   "DEPRECATED: Acceleration is reduced by this amount when sliding [m/s<sup>2</sup>]."
+  ],
+  "slideAcceleration": [
+   "Acceleration is multiplied by this value when sliding."
+  ],
+  "minSmokeAngle": [
+   "If non-zero, smoke and skidmark only appear if slip angle is at least this much when sliding (in degrees).\nThis only affects the visual smoke effect, not the actual physics.\nUsually, you want to keep this at 0 so that the effect is directly tied to sliding."
+  ],
+  "minSmokeRange": [
+   "If Min Smoke Angle is non-zero, this defines how long the gradual range for full smoke effect is (in degrees).\nThis doesn't do anything if Min Smoke Angle is 0."
+  ]
+ },
+ "SteeringProperties": {
+  "grip": [
+   "Grip, rotation in rad/s is grip / speed.\nDefines how quickly the car can turn without starting to slide.\nIf there is no oversteering, this also caps the maximum turning speed."
+  ],
+  "maxSteering": [
+   "Maximum steering speed in deg/s.\nThis only has an effect if grip and/or oversteering values are so high\nthat the full steering speed would be more than this."
+  ],
+  "changeSpeed": [
+   "Steering change speed in deg/s<sup>2</sup>.\nIf this is low, turning becomes more sluggish."
+  ],
+  "changeReturnSpeed": [
+   "Steering change return to 0 speed in deg/s<sup>2</sup>.\nAlso affects recovering from spins."
+  ],
+  "neutralReturn": [
+   "Multiplier to change return speed when not countersteering but keeping steering on neutral.\nBy using smaller values steering returns to neutral smoother unless steering to opposite direction."
+  ],
+  "limitingMode": [
+   "DISABLED - keeping as a reference but not used at the moment - How the vehicle behaves when steering is limited."
+  ],
+  "flyingSteering": [
+   "Flying steering in deg/s<sup>2</sup>."
+  ],
+  "flyingChangeMult": [
+   "Flying steering change multiplier. Set to 0 to not be able to change steering when flying."
+  ],
+  "fullSteeringSpeed": [
+   "Car speed required for full steering.\nIf 0, car can turn even when not moving."
+  ],
+  "reverseSteering": [
+   "Reverse steering mode - in realistic mode, steering rotation is inverted when reversing.\nHovercraft mode might work better with extreme sliding or with zero fullSteeringSpeed."
+  ]
+ },
+ "OversteeringProperties": {
+  "always": [
+   "Oversteering in deg/s. Positive values causes oversteering and sliding."
+  ],
+  "sliding": [
+   "Extra oversteering in deg/s when sliding."
+  ],
+  "braking": [
+   "Extra oversteering in deg/s when braking."
+  ],
+  "accelerating": [
+   "Extra oversteering in deg/s when accelerating."
+  ]
+ },
+ "SpringProperties": {
+  "maxLength": [
+   "Spring max length."
+  ],
+  "maxAcceleration": [
+   "How much one spring causes acceleration to car when fully compressed.\nRelative to the default gravity so that 1 means one wheel supports the whole car alone in default gravity (20)."
+  ],
+  "damping": [
+   "Spring damping defined as acceleration per compression speed.\nRelative to the default gravity."
+  ],
+  "backLength": [
+   "Back wheel max length is multiplied by this value (but not going over max). 1 for the same as in front."
+  ],
+  "backAcceleration": [
+   "Back wheel max acceleration is multiplied by this value. 1 for the same as in front."
+  ],
+  "backDamping": [
+   "Back wheel spring damping acceleration is multiplied by this value. 1 for the same as in front."
+  ]
+ },
+ "DownforceProperties": {
+  "downforce": [
+   "Force downwards from speed.\nGrip and braking are increased by downforce * (speed / maxSpeed)<sup>2</sup> * cos(slipAngle)"
+  ],
+  "springAffectsGrip": [
+   "Determines whether grip is affected by compression state of front wheel springs.\nIf true, downforce effect follows indirectly from spring state."
+  ],
+  "springAffectsBraking": [
+   "Determines whether braking force is affected by compression state of wheel springs.\nIf true, downforce effect follows indirectly from spring state"
+  ],
+  "maxSpringGs": [
+   "How many Gs over downforce can springs cause grip and braking force (when springs affect).\nHigh values might be realistic but also sometimes cause super-quick turning."
+  ],
+  "maxAccSpringGs": [
+   "If non-zero, acceleration is reduced until back wheel weight is enough (1 neutral position)."
+  ]
+ },
+ "WeightTransferProperties": {
+  "turning": [
+   "Torque when turning with grip."
+  ],
+  "braking": [
+   "Torque when braking."
+  ],
+  "accelerating": [
+   "Torque when accelerating."
+  ],
+  "viscosityReduction": [
+   "Amount of viscosity reduced from acceleration torque.\n1 means viscosity is fully removed and no torque at max speed,\n0 means reduction only comes from engine friction."
+  ]
+ },
+ "VehicleProperties": {
+  "makerId": [
+   "User id of the maker"
+  ],
+  "name": [
+   "Name of the vehicle"
+  ],
+  "description": [
+   "Free-form description of the vehicle"
+  ],
+  "tags": [
+   "Tags for the vehicle. Change if there is something special.\nTags can be used in searching for specific kinds of vehicles."
+  ],
+  "collisionShape": [
+   "Collision shape"
+  ],
+  "damage": [
+   "Damage and hit point properties"
+  ],
+  "audio": [
+   "Audio properties"
+  ],
+  "special": [
+   "Special effect and appearance properties"
+  ],
+  "physicsProperties": [
+   "Physics properties related to the model"
+  ]
+ },
+ "VehicleAudioProperties": {
+  "engine": [
+   "Engine sound specific settings"
+  ],
+  "gears": [
+   "Gear sound specific settings"
+  ]
+ },
+ "VehicleEngineAudioProperties": {
+  "pitch": [
+   "Pitch multiplier"
+  ],
+  "channels": [
+   "Determines whether all or just one sound channel is used for the engine sound"
+  ],
+  "lowMax": [
+   "Relative RPM for the max volume of low channel (in All mode)"
+  ],
+  "medMaxRel": [
+   "Medium channel max volume position in relation to low and high channels (in All mode)"
+  ],
+  "highMax": [
+   "Relative RPM for the max volume of high channel (in All mode)"
+  ],
+  "medExtra": [
+   "How much over high max medium channel goes (in All mode) - \nIf 0, medium channel is completely out at high max"
+  ],
+  "gasSpeed": [
+   "How quickly engine gas state audio changes after control changes"
+  ],
+  "onlyGasOn": [
+   "Whether the same sample is used when gas is on and off"
+  ],
+  "gasOffPitch": [
+   "How much pitch is modified when gas is off in OnlyGasOn mode"
+  ],
+  "gasOffVolume": [
+   "How much volume is modified when gas is off in OnlyGasOn mode"
+  ],
+  "flyingPitch": [
+   "How much pitch is increased when using gas in the air"
+  ]
+ },
+ "VehicleGearAudioProperties": {
+  "gearAudio": [
+   "Whether engine audio pitch simulates using gears.\nThis does not affect physics."
+  ],
+  "shiftUp": [
+   "Relative RPM when shifting up gear"
+  ],
+  "shiftDown": [
+   "Relative RPM of the gear below to shift to it when gas is on"
+  ],
+  "shiftDownIdle": [
+   "Relative RPM of the gear below to shift to it when gas is not on"
+  ],
+  "ratio2": [
+   "Gear 2 ratio, 0 for none"
+  ],
+  "ratio3": [
+   "Gear 3 ratio, 0 for none"
+  ],
+  "ratio4": [
+   "Gear 4 ratio, 0 for none"
+  ],
+  "ratio5": [
+   "Gear 5 ratio, 0 for none"
+  ],
+  "ratio6": [
+   "Gear 6 ratio, 0 for none"
+  ],
+  "ratio7": [
+   "Gear 7 ratio, 0 for none"
+  ],
+  "ratio8": [
+   "Gear 8 ratio, 0 for none"
+  ]
+ },
+ "VehicleDamageProperties": {
+  "maxHitPoints": [
+   "Max health / hit points. This only matters on events where damage is active."
+  ]
+ },
+ "VehicleSpecialProperties": {
+  "camberAngleFront": [
+   "Camber angle for the front wheels, that is the leaning/tilting of the front wheels.\nUse non-zero for special wheel looks. Doesn't affect physics."
+  ],
+  "camberAngleRear": [
+   "Camber angle for the rear wheels, that is the leaning/tilting of the rear wheels.\nUse non-zero for special wheel looks. Doesn't affect physics."
+  ]
+ }
+}

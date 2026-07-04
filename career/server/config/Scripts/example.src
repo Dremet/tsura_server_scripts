@@ -1,0 +1,7 @@
+# This is an example script.
+#
+# When an admin runs "/src example", the commands on this file are run as admin.
+#
+# Read more information from README-server.txt.
+
+/broadcast Example script was run.

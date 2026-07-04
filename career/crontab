@@ -1,0 +1,4 @@
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
+# m h  dom mon dow   command
+45 4 * * * steamcmd +login anonymous +quit
+45 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1

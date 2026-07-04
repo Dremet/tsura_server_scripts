@@ -1,0 +1,17 @@
+
+import os
+# release the session lock so run_prepare.sh may regenerate .veh again
+try:
+    os.remove("session_active")
+except FileNotFoundError:
+    pass
+
+commands = [
+    "/broadcast Session has ended for today, see you next time! Visit https://tsura.org/elo-heats for elo ranking",
+    "/timerOn = False",
+]
+
+
+with open("session_end_generated.src", "w", encoding="utf-8-sig") as file:
+    file.write("\n".join(commands) + "\n")
+
