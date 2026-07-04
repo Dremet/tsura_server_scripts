@@ -4,8 +4,8 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
 45 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
 
 # --- TSU Career weekly session (Mondays 21:00) ---
-# 20:45  generate every enrolled driver's tuned car (refuses to run mid-session)
-45 20 * * 1 /home/career/run_prepare.sh >> /home/career/prepare.log 2>&1
+# 20:55  generate every enrolled driver's tuned car (refuses to run mid-session)
+55 20 * * 1 /home/career/run_prepare.sh >> /home/career/prepare.log 2>&1
 # 20:59  announce, 21:00 start (refreshfiles, queue 2 tracks x quali+race, force cars), 23:00 wind down
 59 20 * * 1 cd /home/career/server/config/Scripts && /usr/bin/python3 create_autorun.py announce_1_minute
 00 21 * * 1 cd /home/career/server/config/Scripts && /usr/bin/python3 create_autorun.py start_session
