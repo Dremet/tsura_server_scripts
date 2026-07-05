@@ -15,6 +15,22 @@ set -euo pipefail
 SCRIPTS=/home/career/server/config/Scripts
 LOCK="$SCRIPTS/session_active"
 TIMER_PID_FILE=/home/career/.host_session_timer.pid
+# The server consumes autorun.src; while it is down nobody does, so
+# create_autorun.py would wait forever -> require a running server, and cap
+# the wait as a safety net.
+AUTORUN="timeout 90 /usr/bin/python3 create_autorun.py"
+
+server_running() {
+  pgrep -u career -f 'TSUs\.x86_64' >/dev/null
+}
+
+require_server() {
+  if ! server_running; then
+    echo "The career server is OFFLINE — nothing would consume autorun.src." >&2
+    echo "Start it first: /home/career/restart_server.sh" >&2
+    exit 1
+  fi
+}
 
 kill_timer() {
   if [ -f "$TIMER_PID_FILE" ]; then
@@ -30,27 +46,30 @@ case "${1:-}" in
       echo "Wind it down first with: $0 stop" >&2
       exit 1
     fi
+    require_server
     DURATION_MIN="${2:-120}"
     kill_timer
     echo "[career] generating tuned cars for all enrolled drivers..."
     /home/career/run_prepare.sh
     echo "[career] announcing — session starts in ~1 minute..."
     cd "$SCRIPTS"
-    /usr/bin/python3 create_autorun.py announce_1_minute
+    $AUTORUN announce_1_minute
     sleep 60
-    /usr/bin/python3 create_autorun.py start_session
+    $AUTORUN start_session
     echo "[career] session started (2 tracks, quali + race each)."
-    nohup bash -c "sleep $((DURATION_MIN * 60)); cd '$SCRIPTS' && /usr/bin/python3 create_autorun.py skip_to_new_session; rm -f '$TIMER_PID_FILE'" >/dev/null 2>&1 &
+    nohup bash -c "sleep $((DURATION_MIN * 60)); cd '$SCRIPTS' && timeout 90 /usr/bin/python3 create_autorun.py skip_to_new_session; rm -f '$TIMER_PID_FILE'" >/dev/null 2>&1 &
     echo $! > "$TIMER_PID_FILE"
     echo "[career] auto wind-down in $DURATION_MIN min — or earlier via: $0 stop"
     ;;
   stop)
+    require_server
     kill_timer
     cd "$SCRIPTS"
-    /usr/bin/python3 create_autorun.py skip_to_new_session
+    $AUTORUN skip_to_new_session
     echo "[career] wind-down sent (/continue)."
     ;;
   status)
+    if server_running; then echo "server: RUNNING"; else echo "server: OFFLINE"; fi
     if [ -f "$LOCK" ]; then
       echo "session ACTIVE since $(stat -c '%y' "$LOCK" | cut -d. -f1)"
       [ -f "$TIMER_PID_FILE" ] && echo "auto wind-down timer running (pid $(cat "$TIMER_PID_FILE"))"
