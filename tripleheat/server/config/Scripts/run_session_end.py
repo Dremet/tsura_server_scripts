@@ -1,6 +1,6 @@
 
 commands = [
-    "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> Session over — see you next time! ELO ranking: <b>tsura.org/elo-heats</b>",
+    "/broadcast <color=#dc3545>[TripleHeat]</color> Session over — see you next time! ELO ranking: tsura.org/elo-heats",
     "/timerOn = False",
 ]
 

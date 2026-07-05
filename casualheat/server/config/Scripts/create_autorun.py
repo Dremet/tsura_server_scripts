@@ -108,7 +108,7 @@ def save_quali_marker_file():
 @wait_for_autorun_file
 def announce_1_minute():
     commands = [
-        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Session starts in <b>1 minute</b>!",
+        "/broadcast <color=#0d6efd>[Casual Heat]</color> Session starts in 1 minute!",
     ]
     write_to_autorun(commands)
 
@@ -127,7 +127,7 @@ def start_session():
 
     commands = [
         "/timerOn = True",
-        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Session started! Setting things up…",
+        "/broadcast <color=#0d6efd>[Casual Heat]</color> Session started! Setting things up…",
         "/admins /clear",
         "/admins /add 76561197989276622",  # dremet
         "/admins /add 76561198131829686",  # mcvizn
@@ -154,10 +154,10 @@ def start_session():
     print(commands)
 
     commands += [
-        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> <b>Ready!</b> Enjoy the races!",
-        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> 2-lap quali per track — starting order is always <b>Last Event</b>.",
-        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Fuel & tire wear are <b>randomized</b> each race.",
-        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Cars are picked <b>randomly</b> for each track.",
+        "/broadcast <color=#0d6efd>[Casual Heat]</color> Ready! Enjoy the races!",
+        "/broadcast <color=#0d6efd>[Casual Heat]</color> 2-lap quali per track — starting order is always Last Event.",
+        "/broadcast <color=#0d6efd>[Casual Heat]</color> Fuel & tire wear are randomized each race.",
+        "/broadcast <color=#0d6efd>[Casual Heat]</color> Cars are picked randomly for each track.",
     ]
 
     write_to_autorun(commands)

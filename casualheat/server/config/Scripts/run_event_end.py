@@ -1,4 +1,4 @@
-commands = ["/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> <color=#aaaaaa>Event finished.</color>"]
+commands = ["/broadcast <color=#0d6efd>[Casual Heat]</color> <color=#aaaaaa>Event finished.</color>"]
 
 
 with open("event_end_generated.src", "w", encoding="utf-8-sig") as file:

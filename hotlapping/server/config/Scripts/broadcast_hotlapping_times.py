@@ -68,7 +68,7 @@ def query_database():
     ) as f:
         for i, result in enumerate(results, start=1):
             if i == 1:
-                f.write("/broadcast <color=#20c997><b>[Hotlapping]</b> Current Top 10</color>\n")
+                f.write("/broadcast <color=#20c997>[Hotlapping] Current Top 10</color>\n")
 
             name = result["driver"]
             if len(name) > 17:

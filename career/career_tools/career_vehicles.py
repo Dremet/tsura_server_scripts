@@ -37,8 +37,10 @@ TUNING_FIELDS = {
 
 
 def _sanitize_filename(s: str) -> str:
-    """Keep it filesystem- and game-safe (game rejects illegal fn chars)."""
+    """Filesystem- and game-safe (game rejects illegal fn chars); generated
+    filenames must not contain spaces."""
     s = re.sub(r"[^A-Za-z0-9 _.\-]", "", s).strip()
+    s = re.sub(r"\s+", "_", s)
     return s[:64] or "career_car"
 
 

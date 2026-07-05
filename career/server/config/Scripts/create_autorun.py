@@ -115,7 +115,7 @@ def save_quali_marker_file():
 ### CRON ENTRY POINTS ###
 @wait_for_autorun_file
 def announce_1_minute():
-    write_to_autorun(["/broadcast <color=#ffc107><b>[Career]</b></color> Session starts in <b>1 minute</b>!"])
+    write_to_autorun(["/broadcast <color=#ffc107>[Career]</color> Session starts in 1 minute!"])
 
 
 @wait_for_autorun_file
@@ -131,7 +131,7 @@ def start_session():
 
     commands = [
         "/timerOn = True",
-        "/broadcast <color=#ffc107><b>[Career]</b></color> Session started! Setting things up…",
+        "/broadcast <color=#ffc107>[Career]</color> Session started! Setting things up…",
         "/admins /clear",
     ]
     commands += [f"/admins /add {sid}" for sid in ADMINS]
@@ -150,8 +150,8 @@ def start_session():
     commands += [f"/level /add '{track}'" for track in duplicated_tracks]
 
     commands += [
-        "/broadcast <color=#ffc107><b>[Career]</b></color> <b>Ready!</b> Two races tonight, each with a 3-lap quali.",
-        "/broadcast <color=#ffc107><b>[Career]</b></color> You drive your own tuned car — upgrade it at <b>tsura.org/career</b>",
+        "/broadcast <color=#ffc107>[Career]</color> Ready! Two races tonight, each with a 3-lap quali.",
+        "/broadcast <color=#ffc107>[Career]</color> You drive your own tuned car — upgrade it at tsura.org/career",
     ]
     write_to_autorun(commands)
 

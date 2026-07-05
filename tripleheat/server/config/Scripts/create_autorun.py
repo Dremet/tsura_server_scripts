@@ -132,7 +132,7 @@ def save_quali_marker_file():
 @wait_for_autorun_file
 def announce_1_minute():
     commands = [
-        "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> Session starts in <b>1 minute</b>!",
+        "/broadcast <color=#dc3545>[TripleHeat]</color> Session starts in 1 minute!",
     ]
     write_to_autorun(commands)
 
@@ -151,7 +151,7 @@ def start_session():
 
     commands = [
         "/timerOn = True",
-        "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> Session started! Setting things up…",
+        "/broadcast <color=#dc3545>[TripleHeat]</color> Session started! Setting things up…",
         "/admins /clear",
         "/admins /add 76561197989276622",  # dremet
         "/admins /add 76561198131829686",  # mcvizn
@@ -179,9 +179,9 @@ def start_session():
     print(commands)
 
     commands += [
-        "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> <b>Ready!</b> Enjoy the races!",
-        "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> 1-lap quali per track — starting order is always <b>Last Event</b>.",
-        "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> Fuel & tire wear are <b>randomized</b> each race.",
+        "/broadcast <color=#dc3545>[TripleHeat]</color> Ready! Enjoy the races!",
+        "/broadcast <color=#dc3545>[TripleHeat]</color> 1-lap quali per track — starting order is always Last Event.",
+        "/broadcast <color=#dc3545>[TripleHeat]</color> Fuel & tire wear are randomized each race.",
     ]
 
     write_to_autorun(commands)

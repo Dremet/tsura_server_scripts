@@ -43,6 +43,8 @@ AXIS_TO_TUNE = {
 
 
 def _unique_name(base: str, used: set, steam_id: int) -> str:
+    # apostrophes would break the quoted /vehicles-/forcevehicle commands
+    base = base.replace("'", "")
     name = f"Career {base}"[:40]
     if name in used:
         name = f"{name[:33]} #{str(steam_id)[-4:]}"[:40]

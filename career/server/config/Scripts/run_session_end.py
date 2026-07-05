@@ -7,7 +7,7 @@ except FileNotFoundError:
     pass
 
 commands = [
-    "/broadcast <color=#ffc107><b>[Career]</b></color> Session over — points & credits update within a minute: <b>tsura.org/career</b>",
+    "/broadcast <color=#ffc107>[Career]</color> Session over — points & credits update within a minute: tsura.org/career",
     "/timerOn = False",
 ]
 
