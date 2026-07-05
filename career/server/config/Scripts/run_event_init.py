@@ -50,6 +50,10 @@ def vehicle_commands():
 
 quali = is_next_event_quali()
 
+# refresh between events (refused mid-event): picks up .veh files that were
+# fixed/added after session start, before /vehicles + /forcevehicle run
+refresh = ["/refreshfiles"]
+
 if quali:
     commands = [
         "/broadcast <color=#ffc107>[Career]</color> Qualifying — 3 laps, you drive your own tuned car",
@@ -78,7 +82,7 @@ else:
     ]
 
 # force per-driver cars on every event (quali and race)
-commands += vehicle_commands()
+commands = refresh + commands + vehicle_commands()
 
 with open("event_init_generated.src", "w", encoding="utf-8-sig") as file:
     file.write("\n".join(commands) + "\n")

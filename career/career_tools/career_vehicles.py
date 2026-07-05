@@ -78,7 +78,7 @@ def build_driver_vehicle(
 
     spec = {
         "template": base_veh,          # inherit everything from the base car
-        "name": display_name[:40],
+        "name": display_name[:20].rstrip(" (-_."),
         "filename": _sanitize_filename(display_name),
         "maker": maker,
         "makerSteamId64": int(steam_id64),

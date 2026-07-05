@@ -71,9 +71,9 @@ def _focus_text(spent_by_axis: dict) -> str | None:
 def _unique_name(base: str, used: set, steam_id: int) -> str:
     # apostrophes would break the quoted /vehicles-/forcevehicle commands
     base = base.replace("'", "")
-    name = f"Career {base}"[:40]
+    name = f"Career {base}"[:20].rstrip(" (-_.")
     if name in used:
-        name = f"{name[:33]} #{str(steam_id)[-4:]}"[:40]
+        name = f"{name[:14]} #{str(steam_id)[-4:]}"
     used.add(name)
     return name
 

@@ -356,7 +356,7 @@ MID_DEFAULTS = {
 
 # string limits (game metadata: MaxNameLength / MaxDescriptionLength /
 # MaxFilenameLength)
-NAME_MAX = 40
+NAME_MAX = 20  # metadata says 40, but the game refuses to LOAD names > 20 (verified 2026-07-05)
 DESCRIPTION_MAX = 256
 FILENAME_MAX = 64
 _FILENAME_BAD = set('<>:"/\\|?*') | {chr(c) for c in range(32)}
