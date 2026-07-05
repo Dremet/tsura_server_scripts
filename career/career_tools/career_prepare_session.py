@@ -34,6 +34,11 @@ AXIS_TO_TUNE = {
     "acceleration": "acceleration",
     "braking": "braking",
     "downforce": "downforce",
+    "grip": "grip",
+    "sliding_gradual_range": "sliding_gradual_range",
+    "spring_max_length": "spring_max_length",
+    "locking_start_time": "locking_start_time",
+    "oversteering_braking": "oversteering_braking",
 }
 
 

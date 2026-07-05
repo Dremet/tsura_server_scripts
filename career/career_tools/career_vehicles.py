@@ -2,7 +2,7 @@
 
 Decoupled building block for the TSU Career mode: given a base Workshop car
 (a .veh chosen per season) and a driver's *final* tuned physics values, produce
-a per-driver .veh whose only differences from the base are the four tunable
+a per-driver .veh whose only differences from the base are the tunable
 axes plus a per-driver identity (name / filename / maker steam-id -> unique guid).
 
 The tier -> value mapping lives in the web/DB layer (season upgrade config);
@@ -21,13 +21,18 @@ import sys
 import make_veh
 import tsu_veh
 
-# The four tunable axes -> (physics section, field). Central mapping so the
+# The tunable axes -> (physics section, field). Central mapping so the
 # web UI, the DB and the generator all agree on what "Top Speed" etc. means.
 TUNING_FIELDS = {
-    "top_speed":    ("speed", "maxSpeed"),
-    "acceleration": ("speed", "engineFriction"),  # TSU editor "Acceleration" == .veh engineFriction
-    "braking":      ("braking", "braking"),
-    "downforce":    ("downforce", "downforce"),
+    "top_speed":             ("speed", "maxSpeed"),
+    "acceleration":          ("speed", "engineFriction"),  # TSU editor "Acceleration" == .veh engineFriction
+    "braking":               ("braking", "braking"),
+    "downforce":             ("downforce", "downforce"),
+    "grip":                  ("steering", "grip"),
+    "sliding_gradual_range": ("sliding", "gradualRange"),
+    "spring_max_length":     ("spring", "maxLength"),
+    "locking_start_time":    ("braking", "lockingStartTime"),
+    "oversteering_braking":  ("oversteering", "braking"),
 }
 
 
