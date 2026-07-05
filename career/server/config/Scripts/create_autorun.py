@@ -10,6 +10,7 @@ Career specifics:
     The choosable list + per-driver /forcevehicle are emitted per event by
     run_event_init.py (they must be re-applied every event).
 """
+import json
 import os
 import sys
 import time
@@ -107,6 +108,33 @@ def select_random_elements_with_weights(tracks_with_weights, n=2):
     return selected
 
 
+def build_focus_lines():
+    """Broadcast lines summarizing each driver's tuning focus (from
+    assignments.json, written by career_prepare_session.py at prep time)."""
+    try:
+        with open("assignments.json", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        return []
+    focus, stock = [], []
+    for a in data.get("assignments", []):
+        name = a.get("driver") or a.get("vehicle", "?")
+        if a.get("focus"):
+            focus.append(f"/broadcast <color=#ffc107>[Career]</color> "
+                         f"{name} — {a['focus']}")
+        else:
+            stock.append(name)
+    lines = []
+    if focus:
+        lines.append("/broadcast <color=#ffc107>[Career]</color> "
+                     "Tonight's builds:")
+        lines += focus
+    if stock:
+        lines.append(f"/broadcast <color=#ffc107>[Career]</color> "
+                     f"<color=#aaaaaa>Stock car: {', '.join(stock)}</color>")
+    return lines
+
+
 def save_quali_marker_file():
     with open("next_event_is_quali", "w") as file:
         pass
@@ -153,6 +181,7 @@ def start_session():
         "/broadcast <color=#ffc107>[Career]</color> Ready! Two races tonight, each with a 3-lap quali.",
         "/broadcast <color=#ffc107>[Career]</color> You drive your own tuned car — upgrade it at tsura.org/career",
     ]
+    commands += build_focus_lines()
     write_to_autorun(commands)
 
 

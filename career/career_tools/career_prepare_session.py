@@ -42,6 +42,32 @@ AXIS_TO_TUNE = {
 }
 
 
+FOCUS_LABELS = {
+    "top_speed": "Top Speed", "acceleration": "Acceleration",
+    "braking": "Braking", "grip": "Grip", "downforce": "Downforce",
+    "sliding_gradual_range": "Sliding Control", "spring_max_length": "Suspension",
+    "locking_start_time": "Brake Locking", "oversteering_braking": "Stability",
+}
+
+
+def _focus_text(spent_by_axis: dict) -> str | None:
+    """One human phrase describing where a driver put their credits."""
+    total = sum(spent_by_axis.values())
+    if total <= 0:
+        return None
+    ranked = sorted(spent_by_axis.items(), key=lambda kv: -kv[1])
+    top_axis, top_spent = ranked[0]
+    nonzero = [a for a, s in ranked if s > 0]
+    if len(nonzero) >= 4 and top_spent / total < 0.4:
+        return f"balanced build ({total} cr invested)"
+    if len(nonzero) == 1:
+        return f"all-in on {FOCUS_LABELS[top_axis]} ({total} cr invested)"
+    if ranked[1][1] >= top_spent / 2:
+        return (f"focused on {FOCUS_LABELS[top_axis]} & "
+                f"{FOCUS_LABELS[ranked[1][0]]} ({total} cr invested)")
+    return f"focused on {FOCUS_LABELS[top_axis]} ({total} cr invested)"
+
+
 def _unique_name(base: str, used: set, steam_id: int) -> str:
     # apostrophes would break the quoted /vehicles-/forcevehicle commands
     base = base.replace("'", "")
@@ -73,12 +99,23 @@ def prepare(db_url: str, vehicles_dir: str, scripts_dir: str,
                     "ORDER BY driver_name", (season["id"],))
         rows = cur.fetchall()
 
+        cur.execute("SELECT du.steam_id, du.axis, du.tier * ua.cost_per_tier AS spent "
+                    "FROM career.driver_upgrades du "
+                    "JOIN career.upgrade_axes ua "
+                    "ON ua.season_id = du.season_id AND ua.axis = du.axis "
+                    "WHERE du.season_id=%s", (season["id"],))
+        spent_rows = cur.fetchall()
+
     drivers: dict = {}
     for r in rows:
         d = drivers.setdefault(r["steam_id"],
                                {"name": r["driver_name"], "tuned": {}})
         if r["axis"] in AXIS_TO_TUNE:
             d["tuned"][AXIS_TO_TUNE[r["axis"]]] = float(r["final_value"])
+
+    spent: dict = {}
+    for r in spent_rows:
+        spent.setdefault(r["steam_id"], {})[r["axis"]] = r["spent"]
 
     used_names: set = set()
     assignments = []
@@ -91,7 +128,9 @@ def prepare(db_url: str, vehicles_dir: str, scripts_dir: str,
             display_name=veh_name, steam_id64=steam_id, tuned=d["tuned"],
             description=f"{season['name']} car for {d['name']}.")
         assignments.append({"steam_id": str(steam_id), "vehicle": veh_name,
-                            "filename": os.path.basename(out_path)})
+                            "filename": os.path.basename(out_path),
+                            "driver": d["name"],
+                            "focus": _focus_text(spent.get(steam_id, {}))})
 
     out = {"season": season["name"], "season_id": season["id"],
            "base_vehicle_name": season["base_vehicle_name"],
