@@ -49,7 +49,7 @@ if quali:
         point_commands.append(f"/points.position{i} = 0")
 
     commands = [
-        "/broadcast Setting up Qualifying",
+        "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> <b>Qualifying</b> coming up…",
         "/race.raceMode = Hotlapping",
         f"/race.maxLaps = {QUALI_LAPS}",
         f"/race.maxMinutes = {QUALI_MAX_MINUTES}",
@@ -59,7 +59,7 @@ if quali:
         "/tireWear.tireWearOn = 0",
         # f"/fuelFullGasTime = {QUALI_FUEL}",
         # f"/tireWear.compound1Endurance = {QUALI_TIRES}",
-        "/broadcast Hotlapping now, even if the User Interface might show different",
+        "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> <color=#aaaaaa>UI may show a different mode — this is the quali.</color>",
     ]
 
     commands = point_commands + commands
@@ -81,7 +81,7 @@ else:
         point_commands.append(f"/points.position{i} = 0")
 
     commands = [
-        "/broadcast Setting up Race",
+        "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> <b>Race</b> coming up…",
         "/race.raceMode = Race",
         f"/race.maxLaps = {race_laps}",
         f"/race.maxMinutes = {RACE_MAX_MINUTES}",
@@ -91,7 +91,7 @@ else:
         "/tireWear.tireWearOn = 1",
         f"/fuelFullGasTime = {fuel}",
         f"/tireWear.compound1Endurance = {tires}",
-        "/broadcast Race now, even if the User Interface might show different",
+        "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> <color=#aaaaaa>UI may show a different mode — this is the race.</color>",
     ]
 
     commands = point_commands + commands

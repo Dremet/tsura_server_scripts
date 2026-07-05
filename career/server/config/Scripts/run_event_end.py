@@ -1,4 +1,4 @@
-commands = ["/broadcast Event End"]
+commands = ["/broadcast <color=#ffc107><b>[Career]</b></color> <color=#aaaaaa>Event finished.</color>"]
 
 
 with open("event_end_generated.src", "w", encoding="utf-8-sig") as file:

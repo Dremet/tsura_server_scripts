@@ -37,7 +37,7 @@ def vehicle_commands():
     """Choosable list of every driver's car + a /forcevehicle per Steam ID."""
     path = "assignments.json"
     if not os.path.exists(path):
-        return ["/broadcast (Career: no car assignments found — using default cars)"]
+        return ["/broadcast <color=#ffc107><b>[Career]</b></color> <color=#ff6b6b>No car assignments found — using default cars!</color>"]
     data = json.load(open(path, encoding="utf-8"))
     cmds = ["/vehicles /clear"]
     for a in data.get("assignments", []):
@@ -52,7 +52,7 @@ quali = is_next_event_quali()
 
 if quali:
     commands = [
-        "/broadcast Setting up Qualifying (3 laps) — you drive your own tuned car",
+        "/broadcast <color=#ffc107><b>[Career]</b></color> <b>Qualifying</b> — 3 laps, you drive your own tuned car",
         "/race.raceMode = Hotlapping",
         f"/race.maxLaps = {QUALI_LAPS}",
         f"/race.maxMinutes = {QUALI_MAX_MINUTES}",
@@ -64,7 +64,7 @@ if quali:
     ]
 else:
     commands = [
-        "/broadcast Setting up Race — grid from qualifying",
+        "/broadcast <color=#ffc107><b>[Career]</b></color> <b>Race</b> — grid from qualifying",
         "/race.raceMode = Race",
         f"/race.maxLaps = {RACE_LAPS}",
         f"/race.maxMinutes = {RACE_MAX_MINUTES}",

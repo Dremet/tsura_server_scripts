@@ -1,6 +1,6 @@
 
 commands = [
-    "/broadcast Session has ended for today, see you next time! Visit https://tsura.org/elo-heats for elo ranking",
+    "/broadcast <color=#dc3545><b>[TripleHeat]</b></color> Session over — see you next time! ELO ranking: <b>tsura.org/elo-heats</b>",
     "/timerOn = False",
 ]
 

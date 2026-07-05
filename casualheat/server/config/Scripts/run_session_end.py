@@ -1,6 +1,6 @@
 
 commands = [
-    "/broadcast Session has ended for today, see you next time! Visit https://tsura.org/races for race results!",
+    "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Session over — see you next time! Results: <b>tsura.org/races</b>",
     "/timerOn = False",
 ]
 

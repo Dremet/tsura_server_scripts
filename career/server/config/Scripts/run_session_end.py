@@ -7,7 +7,7 @@ except FileNotFoundError:
     pass
 
 commands = [
-    "/broadcast Session has ended for today, see you next time! Visit https://tsura.org/elo-heats for elo ranking",
+    "/broadcast <color=#ffc107><b>[Career]</b></color> Session over — points & credits update within a minute: <b>tsura.org/career</b>",
     "/timerOn = False",
 ]
 

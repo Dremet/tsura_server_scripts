@@ -68,11 +68,18 @@ def query_database():
     ) as f:
         for i, result in enumerate(results, start=1):
             if i == 1:
-                f.write("/broadcast ### Current Top 10 ###\n")
+                f.write("/broadcast <color=#20c997><b>[Hotlapping]</b> Current Top 10</color>\n")
 
-            driver = result["driver"] + ":"
+            name = result["driver"]
+            if len(name) > 17:
+                name = name[:16] + "\u2026"
+            driver = (name + ":").ljust(20)
+            lap = format_seconds_to_time(result["best_lap_seconds"])
+            # <mspace> forces equal glyph widths so ranks/names/times align;
+            # <noparse> keeps player names from injecting rich-text tags
             f.write(
-                f"/broadcast {i}. {driver.ljust(20)} {format_seconds_to_time(result['best_lap_seconds'])} ({result['car']})\n"
+                f"/broadcast <mspace=0.6em>{i:>2}. <noparse>{driver}</noparse>{lap}</mspace>"
+                f" <color=#aaaaaa>({result['car']})</color>\n"
             )
 
 

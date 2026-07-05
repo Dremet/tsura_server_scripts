@@ -124,7 +124,7 @@ if quali:
         point_commands.append(f"/points.position{i} = 0")
 
     commands = [
-        "/broadcast Setting up Qualifying",
+        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> <b>Qualifying</b> coming up…",
         "/race.raceMode = Hotlapping",
         f"/race.maxLaps = {QUALI_LAPS}",
         f"/race.maxMinutes = {QUALI_MAX_MINUTES}",
@@ -136,8 +136,8 @@ if quali:
         f"/vehicles /add '{car}'",
         # f"/fuelFullGasTime = {QUALI_FUEL}",
         # f"/tireWear.compound1Endurance = {QUALI_TIRES}",
-        f"/broadcast Selected car: {car}",
-        "/broadcast Hotlapping now, even if the User Interface might show different",
+        f"/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Selected car: <b>{car}</b>",
+        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> <color=#aaaaaa>UI may show a different mode — this is the quali.</color>",
     ]
 
     commands = point_commands + commands
@@ -159,7 +159,7 @@ else:
         point_commands.append(f"/points.position{i} = 0")
 
     commands = [
-        "/broadcast Setting up Race",
+        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> <b>Race</b> coming up…",
         "/race.raceMode = Race",
         f"/race.maxLaps = {RACE_LAPS}",
         f"/race.maxMinutes = {RACE_MAX_MINUTES}",
@@ -168,7 +168,7 @@ else:
         "/fuel.fuelOn = 1",
         "/tireWear.tireWearOn = 1",
         f"/fuelFullGasTime = {fuel}",
-        f"/broadcast Number of tire compounds: {number_compounds}",
+        f"/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Tire compounds: <b>{number_compounds}</b>",
     ]
 
     commands = point_commands + commands
@@ -180,24 +180,24 @@ else:
         commands.append(f"/tireWear.tireCompoundCount = 1")
         commands.append(f"/tireWear.compound1Endurance = {tire_deg}")
         commands.append(f"/tireWear.compound1InitialPerformance = 100")
-        commands.append(f"/broadcast Tire Degradation: {desc_tire_deg} ({tire_deg})")
+        commands.append(f"/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Tire degradation: <b>{desc_tire_deg}</b> <color=#aaaaaa>({tire_deg})</color>")
     else:
         desc_soft_tire_deg = get_tire_deg_desc(soft_tire_deg)
         commands.append(f"/tireWear.tireCompoundCount = 2")
         commands.append(f"/tireWear.compound1Endurance = {soft_tire_deg}")
         commands.append(
-            f"/broadcast Degradation of Tire Compound 1 (Soft): {desc_soft_tire_deg} ({soft_tire_deg}) with 100 initial performance."
+            f"/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Compound 1 (Soft): <b>{desc_soft_tire_deg}</b> <color=#aaaaaa>({soft_tire_deg}, initial performance 100)</color>"
         )
         commands.append(f"/tireWear.compound1InitialPerformance = 100")
         commands.append(f"/tireWear.compound2Endurance = {tire_deg}")
         commands.append(
-            f"/broadcast Degradation of Tire Compound 2 (Medium): {desc_tire_deg} ({tire_deg}) with 88 initial performance."
+            f"/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Compound 2 (Medium): <b>{desc_tire_deg}</b> <color=#aaaaaa>({tire_deg}, initial performance 88)</color>"
         )
         commands.append(f"/tireWear.compound2InitialPerformance = 88")
 
     commands += [
-        f"/broadcast Fuel Consumption: {desc_fuel_cons} ({fuel})",
-        "/broadcast Race now, even if the User Interface might show different",
+        f"/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> Fuel consumption: <b>{desc_fuel_cons}</b> <color=#aaaaaa>({fuel})</color>",
+        "/broadcast <color=#0d6efd><b>[Casual Heat]</b></color> <color=#aaaaaa>UI may show a different mode — this is the race.</color>",
     ]
 
 
