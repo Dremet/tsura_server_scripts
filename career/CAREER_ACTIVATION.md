@@ -1,4 +1,9 @@
-# Career server — race-night activation
+# Career server — race-night activation (HISTORICAL)
+
+> This is the original one-time activation record (2026-07-03). The
+> Career server is now fully live and validated — for day-to-day
+> operation, session hosting, tuning, credits and troubleshooting see
+> **[OPERATIONS.md](OPERATIONS.md)**.
 
 The automation scripts + vehicle tools are deployed but **dormant**: the running
 test server still behaves normally until you enable them. Do these steps when
