@@ -10,3 +10,6 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
 59 20 * * 1 cd /home/career/server/config/Scripts && /usr/bin/python3 create_autorun.py announce_1_minute
 00 21 * * 1 cd /home/career/server/config/Scripts && /usr/bin/python3 create_autorun.py start_session
 00 23 * * 1 cd /home/career/server/config/Scripts && /usr/bin/python3 create_autorun.py skip_to_new_session
+
+# process admin build-and-assign-car requests
+* * * * * /home/career/process_build_requests.sh >> /home/career/build_requests.log 2>&1
