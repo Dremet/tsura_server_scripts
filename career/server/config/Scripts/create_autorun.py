@@ -2,7 +2,7 @@
 Career server. Adapted from the tripleheat template.
 
 Career specifics:
-  * NUMBER_TRACKS = 2  -> two races per evening, each preceded by a quali
+  * NUMBER_TRACKS = 3  -> three short races per evening, each preceded by a quali
     (each track is queued twice: first Hotlapping/quali, then Race).
   * No fixed vehicle list: each driver races their own tuned car. The cars are
     generated + placed in config/Vehicles/ by career_prepare_session.py before
@@ -17,7 +17,7 @@ import time
 import random
 
 ### CONSTANTS ###
-NUMBER_TRACKS = 2
+NUMBER_TRACKS = 3
 
 TRACKS = [
     # same track pool as tripleheat, EQUAL probability (all weight 1)
@@ -135,6 +135,25 @@ def build_focus_lines():
     return lines
 
 
+def build_challenge_lines():
+    """Broadcast each driver's race-day challenge (from assignments.json,
+    assigned at prep time; 100 cr if achieved across tonight's races)."""
+    try:
+        with open("assignments.json", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        return []
+    todo = [(a.get("driver") or a.get("vehicle", "?"), a["objective"])
+            for a in data.get("assignments", []) if a.get("objective")]
+    if not todo:
+        return []
+    lines = ["/broadcast <color=#ffc107>[Career]</color> "
+             "Tonight's challenges (100 cr each, see tsura.org/career):"]
+    lines += [f"/broadcast <color=#ffc107>[Career]</color> {name} - "
+              f"<color=#aaaaaa>{obj}</color>" for name, obj in todo]
+    return lines
+
+
 def save_quali_marker_file():
     # Start every session on a quali; clear any stale completion marker so the
     # first event stays a quali and the restart-robust flip starts clean.
@@ -185,10 +204,11 @@ def start_session():
     commands += [f"/level /add '{track}'" for track in duplicated_tracks]
 
     commands += [
-        "/broadcast <color=#ffc107>[Career]</color> Ready! Two races tonight, each with a 3-lap quali.",
+        "/broadcast <color=#ffc107>[Career]</color> Ready! Three races tonight, each with a 3-lap quali.",
         "/broadcast <color=#ffc107>[Career]</color> You drive your own tuned car — upgrade it at tsura.org/career",
     ]
     commands += build_focus_lines()
+    commands += build_challenge_lines()
     write_to_autorun(commands)
 
 

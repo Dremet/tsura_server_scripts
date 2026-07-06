@@ -13,10 +13,10 @@ import os
 QUALI_LAPS = 3
 QUALI_MAX_MINUTES = 6
 
-# RACE (a bit longer than the tripleheat races)
+# RACE (short - three races per evening since 2026-07)
 import random
-RACE_LAPS = random.randint(12, 18)
-RACE_MAX_MINUTES = 30
+RACE_LAPS = random.randint(8, 12)
+RACE_MAX_MINUTES = 20
 
 # fuel + tire wear like tripleheat: randomized per race
 fuel = random.randint(230, 675)
