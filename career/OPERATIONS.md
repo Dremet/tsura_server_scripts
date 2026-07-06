@@ -122,7 +122,7 @@ before writing, so you don't clobber a pending session command.
 | A driver's `.veh` won't load ("Invalid format, 312 vs …") | **Vehicle name limit is 20 chars** (metadata says 40 — stale). Names are capped in `career_vehicles` + `_unique_name`. |
 | Weird filenames / broken `/forcevehicle` | Generated `.veh` filenames must have **no spaces** (→ `_`); vehicle display names have apostrophes stripped (they break quoted commands). |
 | A fixed `.veh` doesn't appear until next event | `/refreshfiles` is **ignored mid-event**; it's emitted at every event init instead. |
-| A restarted event flips quali↔race for the rest of the session | quali/race is a blind toggle (`next_event_is_quali`); re-running event init desyncs it. Workaround: `touch`/`rm next_event_is_quali` before restarting to set the next mode. |
+| A restarted event flips quali↔race | **Fixed 2026-07-06:** the mode now only advances when an event actually finished (`run_event_end` drops `career_event_done`); a restart fires event-init without an event-end, so the mode is kept. |
 | Career/casual-heat races show no tire stints | Telemetry loader was gated to events/tripleheat; now includes `career`+`casual_heat` (pipeline `loader.py`). |
 | `host_session.sh start` hangs | Server offline — nothing consumes `autorun.src`. The script now refuses when offline; start the server first (`restart_server.sh`, ~60 s). |
 

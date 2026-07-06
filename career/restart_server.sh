@@ -11,6 +11,7 @@ pkill -u career TSUs.x86_64
 rm -f /home/career/server/config/Scripts/session_active
 # a stale autorun.src (e.g. after a crash) would fire old commands at boot
 rm -f /home/career/server/config/Scripts/autorun.src
+rm -f /home/career/server/config/Scripts/career_event_done /home/career/server/config/Scripts/career_event_mode
 
 # Wait a bit to ensure the server has stopped properly
 sleep 60

@@ -23,14 +23,23 @@ fuel = random.randint(230, 675)
 tires = random.randint(500, 1700)
 
 
+# Quali/race mode is restart-robust: it only advances when an event actually
+# finished (run_event_end drops CAREER_EVENT_DONE). A restart re-fires this
+# init WITHOUT an event-end, so the mode is kept instead of flipping.
+MODE_FILE = "career_event_mode"   # "quali" or "race"
+DONE_FILE = "career_event_done"   # present iff an event finished since last init
+
+
 def is_next_event_quali():
-    exists = os.path.exists("next_event_is_quali")
-    if exists:
-        os.remove("next_event_is_quali")
-    else:
-        with open("next_event_is_quali", "w") as file:
-            pass
-    return exists
+    mode = "quali"
+    if os.path.exists(MODE_FILE):
+        mode = (open(MODE_FILE).read().strip() or "quali")
+    if os.path.exists(DONE_FILE):        # genuine event completion -> advance
+        mode = "race" if mode == "quali" else "quali"
+        os.remove(DONE_FILE)
+    with open(MODE_FILE, "w") as f:
+        f.write(mode)
+    return mode == "quali"
 
 
 def vehicle_commands():

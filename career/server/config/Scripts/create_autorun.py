@@ -136,8 +136,15 @@ def build_focus_lines():
 
 
 def save_quali_marker_file():
-    with open("next_event_is_quali", "w") as file:
-        pass
+    # Start every session on a quali; clear any stale completion marker so the
+    # first event stays a quali and the restart-robust flip starts clean.
+    with open("career_event_mode", "w") as f:
+        f.write("quali")
+    for stale in ("career_event_done", "next_event_is_quali"):
+        try:
+            os.remove(stale)
+        except FileNotFoundError:
+            pass
 
 
 ### CRON ENTRY POINTS ###
