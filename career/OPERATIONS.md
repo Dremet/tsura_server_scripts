@@ -22,6 +22,11 @@ All career-user files need `sudo -u career …` (the `claude` user's EACCES othe
 00 21 * * 1  … create_autorun.py start_session       # /refreshfiles, queue 2 tracks × (quali+race), force cars, broadcast builds
 00 23 * * 1  … create_autorun.py skip_to_new_session # wind down
 ```
+
+Independent of the Monday schedule, **every minute**:
+```
+* * * * *  /home/career/process_build_requests.sh   # admin "build & assign car" queue (§8)
+```
 Nothing to do — it runs itself. Drivers do NOT need to be in the lobby at start:
 `/forcevehicle` is re-issued at every event, so a driver's tuned car applies from
 the next quali/race after they join.
@@ -94,6 +99,14 @@ Computed in the pipeline (`career.py`) + the view `mart.v_career_credit_balance`
   races (migration 011). `balance = start_credits + earned + backfill − spent`.
 - **Undo:** the garage's "undo last upgrade" reverts exactly the most recent purchase
   (one step, `career.last_purchase`); refund is implicit.
+- **Current Alpha Season:** `start_credits=1000`, `credit_first=200` (P1), `credit_last=600`
+  (last). Payout is linear in between (P1 200 → P2 300 → … → last 600).
+- **Changing a season's `credit_first`/`credit_last` is NOT retroactive** — stored
+  `career.race_rewards.credits` keep their old values. To apply new payouts to past
+  races, recompute: as user `data` with the pipeline env, run
+  `tsu_pipeline.career.compute_career_rewards(session_ids, cur)` over the season's
+  race sessions (`SELECT DISTINCT session_id FROM career.race_rewards WHERE season_id=…`);
+  it upserts credits/points idempotently and balances/backfill follow via the views.
 
 ---
 
@@ -124,6 +137,7 @@ before writing, so you don't clobber a pending session command.
 | A fixed `.veh` doesn't appear until next event | `/refreshfiles` is **ignored mid-event**; it's emitted at every event init instead. |
 | A restarted event flips quali↔race | **Fixed 2026-07-06:** the mode now only advances when an event actually finished (`run_event_end` drops `career_event_done`); a restart fires event-init without an event-end, so the mode is kept. |
 | Career/casual-heat races show no tire stints | Telemetry loader was gated to events/tripleheat; now includes `career`+`casual_heat` (pipeline `loader.py`). |
+| Literal `\uXXXX` shows up on a web page | In a **Python** string `\uXXXX` decodes to the char, but written into an **HTML/Jinja template** the text `\uXXXX` renders as-is. Always put **real** unicode chars (—, …, ’) in template HTML, never `\u` escapes. |
 | `host_session.sh start` hangs | Server offline — nothing consumes `autorun.src`. The script now refuses when offline; start the server first (`restart_server.sh`, ~60 s). |
 
 `restart_server.sh` clears stale `session_active` + `autorun.src` on boot.
@@ -140,3 +154,53 @@ before writing, so you don't clobber a pending session command.
   gunicorn user service.
 - **Pipeline / DB migrations** (`Dremet/tsu_pipeline`): SQL in `migrations/`, applied
   to the prod DB **as `postgres`** (not auto-run by a pull).
+
+  Applied migrations incl.: `012_career_penalties` (standings penalties),
+  `013_career_build_requests` (admin build-&-assign-car queue).
+
+---
+
+## 8. Admin actions on the website (`tsura.org/career/admin`, admins only)
+
+- **Give / remove penalty points** — affects the **overall standings only**
+  (`career.penalties`, season-scoped, netted into `mart.v_career_standings.points_total`).
+  The standings page lists each penalty (when / who / points / why).
+- **Rebuild & assign a car** — for a driver who upgraded late. The website (role
+  `tsura`) can't write career files, so the button just enqueues into
+  `career.car_build_requests` (migration 013). The career cron
+  `process_build_requests.py` (every minute) then, per pending row:
+  builds that one driver's `.veh` from current DB tuning, updates `assignments.json`,
+  and — if the server is up — forces it live via `autorun.src`
+  (`/refreshfiles` + `/vehicles /add` + `/forcevehicle` + a broadcast); otherwise it
+  applies from the next event. Marks the row `done`/`error` with a note (shown on the
+  admin page). Safe mid-session (single car, no `session_active` lock).
+  Grants: `tsura` INSERT/SELECT, `career_ro` SELECT/UPDATE on the table.
+- **Create / activate a season** — the new-season form is **prefilled from the active
+  season's** config (start/credit_first/credit_last + per-axis base/step/max/cost), so
+  it clones the current setup. Activating one sets the previous active season to
+  `finished` (only one active at a time).
+
+### Season-scoped vs global (what resets on a new season)
+- **Global (persist):** `allowed_participants` (beta allowlist), `admins`.
+- **Per season (reset):** enrollments, upgrades, credits/balance, `last_purchase`,
+  `upgrade_axes`, `race_rewards`, `penalties`, `car_build_requests`. Drivers must
+  **re-enroll** each season; old seasons stay viewable via the season dropdown.
+
+## 9. Website UI notes
+
+- **Upgrade overview** (`/career/upgrades`): per-axis **competitive grade** relative to
+  the field — **S** (purple) maxed, **A** field-leading (nobody higher, not maxed),
+  **B–E** ranked vs the strongest car, **F** stock. Exact tuned values are hidden.
+  Route helper `_field_grade(tier, max_tier, field_max_tier)`. A **Spent** column shows
+  total credits spent; drivers are sorted by it. Grade columns sort by rank via a
+  numeric `data-sort` (S=6 … F=0), not alphabetically.
+- **Sortable tables:** global click-to-sort JS in `base.html`; a `<th data-nosort>`
+  opts a column out (action/button columns like *Details*). A `<td data-sort="N">`
+  overrides a cell's sort key.
+- **Upgrade-deadline countdown** (Mon 20:55 CEST): any element with class `js-deadline`
+  is filled by the global handler in `base.html` — used big on the garage and on the
+  career home box.
+- **Naming:** display labels are **Triple Heat** / **Casual Heat** (internal server keys
+  stay `tripleheat` / `casual_heat`). The front-page server cards colour the card
+  **header** itself (no badge). The online-servers list still shows each game server's
+  own self-reported name (e.g. "#3 TripleHeat/…") — that's live data, not a label.
