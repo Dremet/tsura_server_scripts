@@ -32,6 +32,14 @@ RACE_START_STYLE = webconfig.get_str(_CFG, ("race", "start_style"), "Random")
 RACE_CONTACT_RULES = webconfig.get_str(_CFG, ("race", "contact_rules"), "Normal")
 RACE_POINTS = webconfig.get_intlist(_CFG, ("race", "points"),
                                     [20, 16, 13, 10, 8, 6, 4, 3, 2, 1])
+# handling tweaks (2026-07-10): less tire-wear oversteer, stronger slipstream
+TIRE_OVERSTEER_EFFECT = webconfig.get_num(_CFG, ("race", "tire_oversteering_effect"), 5)
+DRAFT_SPEED = webconfig.get_num(_CFG, ("race", "drafting_speed_effect"), 5)
+DRAFT_DIST = webconfig.get_num(_CFG, ("race", "drafting_max_distance"), 45)
+DRAFT_ANGLE = webconfig.get_num(_CFG, ("race", "drafting_max_angle"), 20)
+DRAFT_DOWNFORCE_RED = webconfig.get_num(_CFG, ("race", "drafting_downforce_reduction"), 12)
+DRAFT_FOR_MAX = webconfig.get_num(_CFG, ("race", "drafting_for_maximum_effect"), 90)
+DRAFT_ATTEN = webconfig.get_num(_CFG, ("race", "drafting_attenuation_power"), 1.5)
 # generate random fuel consumption
 # the bigger the value, the longer the stints
 fuel = random.randint(*webconfig.get_range(_CFG, "race", "fuel_min", "fuel_max", (230, 675)))
@@ -97,6 +105,13 @@ else:
         "/tireWear.tireWearOn = 1",
         f"/fuelFullGasTime = {fuel}",
         f"/tireWear.compound1Endurance = {tires}",
+        f"/tireWear.tireWearOversteeringEffect = {TIRE_OVERSTEER_EFFECT}",
+        f"/drafting.draftingSpeedEffect = {DRAFT_SPEED}",
+        f"/drafting.maxDraftingDistance = {DRAFT_DIST}",
+        f"/drafting.maxDraftingAngle = {DRAFT_ANGLE}",
+        f"/drafting.draftingDownforceReduction = {DRAFT_DOWNFORCE_RED}",
+        f"/drafting.draftingForMaximumEffect = {DRAFT_FOR_MAX}",
+        f"/drafting.draftingAttenuationPower = {DRAFT_ATTEN}",
         "/broadcast <color=#dc3545>[TripleHeat]</color> <color=#aaaaaa>UI may show a different mode — this is the race.</color>",
     ]
 
