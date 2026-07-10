@@ -1,20 +1,34 @@
 import os
 import random
 
+try:
+    import webconfig
+except Exception:  # a missing/broken helper must never kill a session
+    class webconfig:
+        load = staticmethod(lambda server: {})
+        get_num = staticmethod(lambda cfg, path, default: default)
+        get_range = staticmethod(lambda cfg, s, a, b, default: default)
+        get_weighted = staticmethod(lambda cfg, key, default: default)
+        get_strlist = staticmethod(lambda cfg, key, default: default)
+        get_admins = staticmethod(lambda cfg, default: default)
+
 ### SETUP
+# Values managed via the tsura.org admin panel (defaults = previous hardcoded values)
+_CFG = webconfig.load("tripleheat")
+
 # QUALI
-QUALI_LAPS = 1
-QUALI_MAX_MINUTES = 3
+QUALI_LAPS = webconfig.get_num(_CFG, ("quali", "laps"), 1)
+QUALI_MAX_MINUTES = webconfig.get_num(_CFG, ("quali", "max_minutes"), 3)
 # QUALI_FUEL = 500
 # QUALI_TIRES = 800
 
 # RACE
-race_laps = random.randint(8, 10)
-RACE_MAX_MINUTES = 1440
+race_laps = random.randint(*webconfig.get_range(_CFG, "race", "laps_min", "laps_max", (8, 10)))
+RACE_MAX_MINUTES = webconfig.get_num(_CFG, ("race", "max_minutes"), 1440)
 # generate random fuel consumption
 # the bigger the value, the longer the stints
-fuel = random.randint(230, 675)  # random.randint(230, 625)
-tires = random.randint(500, 1700)  # random.randint(500, 1600)
+fuel = random.randint(*webconfig.get_range(_CFG, "race", "fuel_min", "fuel_max", (230, 675)))
+tires = random.randint(*webconfig.get_range(_CFG, "race", "tires_min", "tires_max", (500, 1700)))
 
 
 ### HELPER ###

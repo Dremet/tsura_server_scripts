@@ -3,12 +3,23 @@ import sys
 import time
 import random
 
+try:
+    import webconfig
+except Exception:  # a missing/broken helper must never kill a session
+    class webconfig:
+        load = staticmethod(lambda server: {})
+        get_num = staticmethod(lambda cfg, path, default: default)
+        get_range = staticmethod(lambda cfg, s, a, b, default: default)
+        get_weighted = staticmethod(lambda cfg, key, default: default)
+        get_strlist = staticmethod(lambda cfg, key, default: default)
+        get_admins = staticmethod(lambda cfg, default: default)
+
 
 ### CONSTANTS ###
 
-NUMBER_TRACKS = 4
+DEFAULT_NUMBER_TRACKS = 4
 
-TRACKS = [
+DEFAULT_TRACKS = [
     ("Bilster Berg v1.01", 1),
     ("Sliders Island v1.0", 1),
     ("Charlotte Speedway RC A V1.02", 1),
@@ -38,6 +49,19 @@ TRACKS = [
     ("Lime Rock Park V2.00", 1),
     ("Candyville Sfinx v1.3", 1),
 ]
+
+DEFAULT_ADMINS = [
+    ("76561197989276622", "dremet"),
+    ("76561198131829686", "mcvizn"),
+    ("76561198096169747", "cyberpunk"),
+]
+
+# Values managed via the tsura.org admin panel (fall back to the defaults above)
+_CFG = webconfig.load("casual_heat")
+NUMBER_TRACKS = max(1, int(webconfig.get_num(_CFG, "number_tracks", DEFAULT_NUMBER_TRACKS)))
+TRACKS = webconfig.get_weighted(_CFG, "tracks", DEFAULT_TRACKS)
+ADMINS = webconfig.get_admins(_CFG, DEFAULT_ADMINS)
+QUALI_LAPS = webconfig.get_num(_CFG, ("quali", "laps"), 2)
 
 
 ### HELPER FUNCTIONS ###
@@ -129,9 +153,9 @@ def start_session():
         "/timerOn = True",
         "/broadcast <color=#0d6efd>[Casual Heat]</color> Session started! Setting things up…",
         "/admins /clear",
-        "/admins /add 76561197989276622",  # dremet
-        "/admins /add 76561198131829686",  # mcvizn
-        "/admins /add 76561198096169747",  # cyberpunk
+    ]
+    commands += [f"/admins /add {steam_id}" for steam_id, _label in ADMINS]
+    commands += [
         "/vehicles /clear",
         "/levels /clear",
         # turn off fuel selection at beginning of race
@@ -140,7 +164,8 @@ def start_session():
     # as no vehicles are selected, it will auto-select sporty but we will change that at event init
 
     # add randomly selected tracks
-    tracks = select_random_elements_with_weights(TRACKS, NUMBER_TRACKS)
+    number_tracks = min(NUMBER_TRACKS, len(TRACKS))
+    tracks = select_random_elements_with_weights(TRACKS, number_tracks)
 
     # duplicate each track for qualification
     duplicated_tracks = []
@@ -155,7 +180,7 @@ def start_session():
 
     commands += [
         "/broadcast <color=#0d6efd>[Casual Heat]</color> Ready! Enjoy the races!",
-        "/broadcast <color=#0d6efd>[Casual Heat]</color> 2-lap quali per track — starting order is always Last Event.",
+        f"/broadcast <color=#0d6efd>[Casual Heat]</color> {QUALI_LAPS}-lap quali per track — starting order is always Last Event.",
         "/broadcast <color=#0d6efd>[Casual Heat]</color> Fuel & tire wear are randomized each race.",
         "/broadcast <color=#0d6efd>[Casual Heat]</color> Cars are picked randomly for each track.",
     ]

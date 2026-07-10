@@ -1,9 +1,22 @@
 import os
 import random
 
-### SETUP
+try:
+    import webconfig
+except Exception:  # a missing/broken helper must never kill a session
+    class webconfig:
+        load = staticmethod(lambda server: {})
+        get_num = staticmethod(lambda cfg, path, default: default)
+        get_range = staticmethod(lambda cfg, s, a, b, default: default)
+        get_weighted = staticmethod(lambda cfg, key, default: default)
+        get_strlist = staticmethod(lambda cfg, key, default: default)
+        get_admins = staticmethod(lambda cfg, default: default)
 
-CARS = [
+### SETUP
+# Values managed via the tsura.org admin panel (defaults = previous hardcoded values)
+_CFG = webconfig.load("casual_heat")
+
+DEFAULT_CARS = [
     ("Hawk v3", 1),
     ("Countach Retro GT", 1),
     ("F3 Proto-R v2", 1),
@@ -19,21 +32,24 @@ CARS = [
     ("Vost 1.1", 1),
 ]
 
+CARS = webconfig.get_weighted(_CFG, "cars", DEFAULT_CARS)
+
 # QUALI
-QUALI_LAPS = 2
-QUALI_MAX_MINUTES = 5
+QUALI_LAPS = webconfig.get_num(_CFG, ("quali", "laps"), 2)
+QUALI_MAX_MINUTES = webconfig.get_num(_CFG, ("quali", "max_minutes"), 5)
 # QUALI_FUEL = 500
 # QUALI_TIRES = 800
 
 # RACE
-RACE_LAPS = 500
-RACE_MAX_MINUTES = 8
+RACE_LAPS = webconfig.get_num(_CFG, ("race", "max_laps"), 500)
+RACE_MAX_MINUTES = webconfig.get_num(_CFG, ("race", "max_minutes"), 8)
 # generate random fuel consumption
 # the bigger the value, the longer the stints
-fuel = random.randint(180, 450)  # random.randint(230, 625)
-tire_deg = random.randint(500, 1300)  # random.randint(500, 1600)
+fuel = random.randint(*webconfig.get_range(_CFG, "race", "fuel_min", "fuel_max", (180, 450)))
+tire_deg = random.randint(*webconfig.get_range(_CFG, "race", "tires_min", "tires_max", (500, 1300)))
 
-number_compounds = random.randint(1, 2)
+max_compounds = max(1, min(2, int(webconfig.get_num(_CFG, ("race", "max_compounds"), 2))))
+number_compounds = random.randint(1, max_compounds)
 
 if number_compounds == 2:
     soft_tire_deg = int(round(tire_deg / 2, 0))

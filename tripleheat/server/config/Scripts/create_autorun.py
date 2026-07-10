@@ -3,12 +3,23 @@ import sys
 import time
 import random
 
+try:
+    import webconfig
+except Exception:  # a missing/broken helper must never kill a session
+    class webconfig:
+        load = staticmethod(lambda server: {})
+        get_num = staticmethod(lambda cfg, path, default: default)
+        get_range = staticmethod(lambda cfg, s, a, b, default: default)
+        get_weighted = staticmethod(lambda cfg, key, default: default)
+        get_strlist = staticmethod(lambda cfg, key, default: default)
+        get_admins = staticmethod(lambda cfg, default: default)
+
 
 ### CONSTANTS ###
 
-NUMBER_TRACKS = 3
+DEFAULT_NUMBER_TRACKS = 3
 
-TRACKS = [
+DEFAULT_TRACKS = [
     ("Sebring v0.9967", 1),
     ("Automotodrom Zaluzani v1 R", 1),
     ("Bikernieki (HSR) v1.0 R", 1),
@@ -57,11 +68,25 @@ TRACKS = [
     ("Miami GP v1.02", 0.3),
 ]
 
-VEHICLES = [
+DEFAULT_VEHICLES = [
     "Mercedes-AMG GT3 v5",
     "Ford Mustang GT3 v5",
-    "Ferrari 296 GT3 v5"
+    "Ferrari 296 GT3 v5",
 ]
+
+DEFAULT_ADMINS = [
+    ("76561197989276622", "dremet"),
+    ("76561198131829686", "mcvizn"),
+    ("76561198096169747", "cyberpunk"),
+]
+
+# Values managed via the tsura.org admin panel (fall back to the defaults above)
+_CFG = webconfig.load("tripleheat")
+NUMBER_TRACKS = max(1, int(webconfig.get_num(_CFG, "number_tracks", DEFAULT_NUMBER_TRACKS)))
+TRACKS = webconfig.get_weighted(_CFG, "tracks", DEFAULT_TRACKS)
+VEHICLES = webconfig.get_strlist(_CFG, "vehicles", DEFAULT_VEHICLES)
+ADMINS = webconfig.get_admins(_CFG, DEFAULT_ADMINS)
+QUALI_LAPS = webconfig.get_num(_CFG, ("quali", "laps"), 1)
 
 
 ### HELPER FUNCTIONS ###
@@ -153,9 +178,9 @@ def start_session():
         "/timerOn = True",
         "/broadcast <color=#dc3545>[TripleHeat]</color> Session started! Setting things up…",
         "/admins /clear",
-        "/admins /add 76561197989276622",  # dremet
-        "/admins /add 76561198131829686",  # mcvizn
-        "/admins /add 76561198096169747",  # cyberpunk
+    ]
+    commands += [f"/admins /add {steam_id}" for steam_id, _label in ADMINS]
+    commands += [
         "/vehicles /clear",
         "/levels /clear",
         # turn off fuel selection at beginning of race
@@ -165,7 +190,8 @@ def start_session():
     commands += [f"/vehicle /add '{vehicle}'" for vehicle in VEHICLES]
 
     # add randomly selected tracks
-    tracks = select_random_elements_with_weights(TRACKS, NUMBER_TRACKS)
+    number_tracks = min(NUMBER_TRACKS, len(TRACKS))
+    tracks = select_random_elements_with_weights(TRACKS, number_tracks)
 
     # duplicate each track for qualification
     duplicated_tracks = []
@@ -180,7 +206,7 @@ def start_session():
 
     commands += [
         "/broadcast <color=#dc3545>[TripleHeat]</color> Ready! Enjoy the races!",
-        "/broadcast <color=#dc3545>[TripleHeat]</color> 1-lap quali per track — starting order is always Last Event.",
+        f"/broadcast <color=#dc3545>[TripleHeat]</color> {QUALI_LAPS}-lap quali per track — starting order is always Last Event.",
         "/broadcast <color=#dc3545>[TripleHeat]</color> Fuel & tire wear are randomized each race.",
     ]
 
