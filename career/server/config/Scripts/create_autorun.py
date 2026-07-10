@@ -69,11 +69,27 @@ TRACKS = [
     ('Miami GP v1.02', 1),
 ]
 
-ADMINS = [
+_DEFAULT_ADMINS = [
     "76561197989276622",  # dremet
     "76561198131829686",  # mcvizn
     "76561198813518085",  # igiava
 ]
+
+
+def _web_admins(default):
+    """In-game admins = the web admin list (tsura.org /admin/admins).
+    Written by the website into career.json; fall back to the default."""
+    try:
+        import json
+        with open("/srv/tsura/server_config/career.json", encoding="utf-8") as f:
+            admins = [str(a[0]) for a in json.load(f)["ingame_admins"]
+                      if str(a[0]).isdigit()]
+        return admins or default
+    except Exception:
+        return default
+
+
+ADMINS = _web_admins(_DEFAULT_ADMINS)
 
 
 ### HELPERS ###

@@ -85,6 +85,21 @@ def get_intlist(cfg, path, default):
         return default
 
 
+def get_params(cfg, path):
+    """Dict of extra event parameters: {'drafting.draftingOn': 1, ...}.
+    Keys are validated command paths; values numbers (or strings)."""
+    try:
+        raw = _get(cfg, path)
+        out = {}
+        for key, val in raw.items():
+            key = str(key)
+            if key and all(c.isalnum() or c in "._" for c in key):
+                out[key] = val
+        return out
+    except Exception:
+        return {}
+
+
 def get_admins(cfg, default):
     """List of [steam_id, label] pairs -> [(str, str), ...]."""
     try:

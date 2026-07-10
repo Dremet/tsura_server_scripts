@@ -121,6 +121,10 @@ else:
     commands = point_commands + commands
 
 
+# web-configured extra event parameters (admin panel, "Advanced")
+extra = webconfig.get_params(_CFG, ("quali" if quali else "race", "params"))
+commands += [f"/{path} = {value}" for path, value in sorted(extra.items())]
+
 print(commands)
 with open("event_init_generated.src", "w", encoding="utf-8-sig") as file:
     file.write("\n".join(commands) + "\n")

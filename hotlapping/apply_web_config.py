@@ -70,8 +70,20 @@ def main():
         log(f"invalid config, not applying: {exc}")
         return
 
-    if cfg == read_json(APPLIED):
+    applied = read_json(APPLIED) or {}
+    if cfg == applied:
         return  # nothing to do
+
+    setup_changed = any(
+        cfg.get(k) != applied.get(k)
+        for k in ("track", "vehicle", "hotlap_behind_distance", "events_per_session")
+    )
+    admins_changed = cfg.get("ingame_admins") != applied.get("ingame_admins")
+    if not setup_changed and not admins_changed:
+        # some other key changed; just record it
+        with open(APPLIED, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2, ensure_ascii=False)
+        return
 
     if not server_running():
         return  # apply on a later run once the server is up
@@ -79,21 +91,27 @@ def main():
         return  # server busy consuming another autorun; retry next minute
 
     try:
-        commands = [
-            "/refreshfiles",
-            "/vehicles /clear",
-            f"/vehicle /add {quoted(vehicle)}",
-            "/levels /clear",
-        ]
-        commands += [f"/level /add {quoted(track)}"] * events
-        commands += [
-            "/respawning.startBehindWhenHotlapping = true",
-            f"/respawning.hotlapBehindDistance = {distance}",
-            f"/broadcast {BADGE} New setup: {track} — {vehicle}",
-            f"/broadcast {BADGE} <color=#aaaaaa>Start-behind distance {distance}, "
-            f"{events} events per session (set via tsura.org).</color>",
-            "/continue",
-        ]
+        commands = []
+        admins = [str(a[0]) for a in cfg.get("ingame_admins", []) if str(a[0]).isdigit()]
+        if admins_changed and admins:
+            # admin-only sync never interrupts the running event
+            commands += ["/admins /clear"] + [f"/admins /add {sid}" for sid in admins]
+        if setup_changed:
+            commands += [
+                "/refreshfiles",
+                "/vehicles /clear",
+                f"/vehicle /add {quoted(vehicle)}",
+                "/levels /clear",
+            ]
+            commands += [f"/level /add {quoted(track)}"] * events
+            commands += [
+                "/respawning.startBehindWhenHotlapping = true",
+                f"/respawning.hotlapBehindDistance = {distance}",
+                f"/broadcast {BADGE} New setup: {track} — {vehicle}",
+                f"/broadcast {BADGE} <color=#aaaaaa>Start-behind distance {distance}, "
+                f"{events} events per session (set via tsura.org).</color>",
+                "/continue",
+            ]
     except ValueError as exc:
         log(f"cannot build commands: {exc}")
         return
@@ -108,8 +126,8 @@ def main():
     except OSError:
         pass
 
-    log(f"applied: track={track!r} vehicle={vehicle!r} "
-        f"distance={distance} events={events}")
+    log(f"applied: setup_changed={setup_changed} admins_changed={admins_changed} "
+        f"track={track!r} vehicle={vehicle!r} distance={distance} events={events}")
 
 
 if __name__ == "__main__":
