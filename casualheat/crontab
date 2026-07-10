@@ -1,4 +1,29 @@
-0 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
-59 19 * * 5 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py announce_1_minute
-00 20 * * 5 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py start_session
-00 21 * * 5 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py skip_to_new_session
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
+# Edit this file to introduce tasks to be run by cron.
+# 
+# Each task to run has to be defined through a single line
+# indicating with different fields when the task will be run
+# and what command to run for the task
+# 
+# To define the time you can provide concrete values for
+# minute (m), hour (h), day of month (dom), month (mon),
+# and day of week (dow) or use '*' in these fields (for 'any').
+# 
+# Notice that tasks will be started based on the cron's system
+# daemon's notion of time and timezones.
+# 
+# Output of the crontab jobs (including errors) is sent through
+# email to the user the crontab file belongs to (unless redirected).
+# 
+# For example, you can run a backup of all your user accounts
+# at 5 a.m every week with:
+# 0 5 * * 1 tar -zcf /var/backups/home.tgz /home/
+# 
+# For more information see the manual pages of crontab(5) and cron(8)
+# 
+# m h  dom mon dow   command
+30 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
+30 4 * * * steamcmd +login anonymous +quit
+59 20 * * 3 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py announce_1_minute
+00 21 * * 3 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py start_session
+00 23 * * 3 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py skip_to_new_session

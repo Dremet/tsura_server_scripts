@@ -19,12 +19,19 @@ _CFG = webconfig.load("tripleheat")
 # QUALI
 QUALI_LAPS = webconfig.get_num(_CFG, ("quali", "laps"), 1)
 QUALI_MAX_MINUTES = webconfig.get_num(_CFG, ("quali", "max_minutes"), 3)
+QUALI_START_STYLE = webconfig.get_str(_CFG, ("quali", "start_style"), "Countdown")
+QUALI_CONTACT_RULES = webconfig.get_str(_CFG, ("quali", "contact_rules"), "EqualGhosts")
+QUALI_POINTS = webconfig.get_intlist(_CFG, ("quali", "points"), [3, 2, 1])
 # QUALI_FUEL = 500
 # QUALI_TIRES = 800
 
 # RACE
 race_laps = random.randint(*webconfig.get_range(_CFG, "race", "laps_min", "laps_max", (8, 10)))
 RACE_MAX_MINUTES = webconfig.get_num(_CFG, ("race", "max_minutes"), 1440)
+RACE_START_STYLE = webconfig.get_str(_CFG, ("race", "start_style"), "Random")
+RACE_CONTACT_RULES = webconfig.get_str(_CFG, ("race", "contact_rules"), "Normal")
+RACE_POINTS = webconfig.get_intlist(_CFG, ("race", "points"),
+                                    [20, 16, 13, 10, 8, 6, 4, 3, 2, 1])
 # generate random fuel consumption
 # the bigger the value, the longer the stints
 fuel = random.randint(*webconfig.get_range(_CFG, "race", "fuel_min", "fuel_max", (230, 675)))
@@ -32,6 +39,12 @@ tires = random.randint(*webconfig.get_range(_CFG, "race", "tires_min", "tires_ma
 
 
 ### HELPER ###
+def build_point_commands(points):
+    """Point commands for positions 1..20 from a points table."""
+    points = list(points)[:20]
+    cmds = [f"/points.position{i} = {p}" for i, p in enumerate(points, 1)]
+    cmds += [f"/points.position{i} = 0" for i in range(len(points) + 1, 21)]
+    return cmds
 def is_next_event_quali():
     """
     Checks if a file called 'next_event_is_quali' exists,
@@ -53,22 +66,15 @@ def is_next_event_quali():
 quali = is_next_event_quali()
 print(quali)
 if quali:
-    point_commands = [
-        "/points.position1 = 3",
-        "/points.position2 = 2",
-        "/points.position3 = 1",
-    ]
-
-    for i in range(4, 21):
-        point_commands.append(f"/points.position{i} = 0")
+    point_commands = build_point_commands(QUALI_POINTS)
 
     commands = [
         "/broadcast <color=#dc3545>[TripleHeat]</color> Qualifying coming up…",
         "/race.raceMode = Hotlapping",
         f"/race.maxLaps = {QUALI_LAPS}",
         f"/race.maxMinutes = {QUALI_MAX_MINUTES}",
-        "/race.startStyle = Countdown",
-        "/race.ContactRules = EqualGhosts",
+        f"/race.startStyle = {QUALI_START_STYLE}",
+        f"/race.ContactRules = {QUALI_CONTACT_RULES}",
         "/fuel.fuelOn = 0",
         "/tireWear.tireWearOn = 0",
         # f"/fuelFullGasTime = {QUALI_FUEL}",
@@ -78,29 +84,15 @@ if quali:
 
     commands = point_commands + commands
 else:
-    point_commands = [
-        "/points.position1 = 20",
-        "/points.position2 = 16",
-        "/points.position3 = 13",
-        "/points.position4 = 10",
-        "/points.position5 = 8",
-        "/points.position6 = 6",
-        "/points.position7 = 4",
-        "/points.position8 = 3",
-        "/points.position9 = 2",
-        "/points.position10 = 1",
-    ]
-
-    for i in range(11, 21):
-        point_commands.append(f"/points.position{i} = 0")
+    point_commands = build_point_commands(RACE_POINTS)
 
     commands = [
         "/broadcast <color=#dc3545>[TripleHeat]</color> Race coming up…",
         "/race.raceMode = Race",
         f"/race.maxLaps = {race_laps}",
         f"/race.maxMinutes = {RACE_MAX_MINUTES}",
-        "/race.startStyle = Random",
-        "/race.ContactRules = Normal",
+        f"/race.startStyle = {RACE_START_STYLE}",
+        f"/race.ContactRules = {RACE_CONTACT_RULES}",
         "/fuel.fuelOn = 1",
         "/tireWear.tireWearOn = 1",
         f"/fuelFullGasTime = {fuel}",

@@ -67,6 +67,24 @@ def get_strlist(cfg, key, default):
         return default
 
 
+def get_str(cfg, path, default):
+    """Non-empty string at `path` (key or tuple of nested keys)."""
+    try:
+        val = str(_get(cfg, path)).strip()
+        return val if val else default
+    except Exception:
+        return default
+
+
+def get_intlist(cfg, path, default):
+    """Non-empty list of ints at `path` (e.g. a points table)."""
+    try:
+        vals = [int(v) for v in _get(cfg, path)]
+        return vals if vals else default
+    except Exception:
+        return default
+
+
 def get_admins(cfg, default):
     """List of [steam_id, label] pairs -> [(str, str), ...]."""
     try:
