@@ -177,6 +177,7 @@ def start_session():
     commands = [
         "/timerOn = True",
         "/broadcast <color=#dc3545>[TripleHeat]</color> Session started! Setting things up…",
+        "/refreshfiles",
         "/admins /clear",
     ]
     commands += [f"/admins /add {steam_id}" for steam_id, _label in ADMINS]

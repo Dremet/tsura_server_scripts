@@ -77,6 +77,8 @@ if quali:
     point_commands = build_point_commands(QUALI_POINTS)
 
     commands = [
+        # reload freshly uploaded .veh/.lvl (career-proven: works at event init)
+        "/refreshfiles",
         "/broadcast <color=#dc3545>[TripleHeat]</color> Qualifying coming up…",
         "/race.raceMode = Hotlapping",
         f"/race.maxLaps = {QUALI_LAPS}",
@@ -95,6 +97,7 @@ else:
     point_commands = build_point_commands(RACE_POINTS)
 
     commands = [
+        "/refreshfiles",
         "/broadcast <color=#dc3545>[TripleHeat]</color> Race coming up…",
         "/race.raceMode = Race",
         f"/race.maxLaps = {race_laps}",

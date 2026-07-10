@@ -80,6 +80,7 @@ def main():
 
     try:
         commands = [
+            "/refreshfiles",
             "/vehicles /clear",
             f"/vehicle /add {quoted(vehicle)}",
             "/levels /clear",

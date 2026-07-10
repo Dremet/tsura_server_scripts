@@ -23,6 +23,7 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
 # 
 # m h  dom mon dow   command
 30 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
+45 20 * * 3 ~/restart_server.sh >> ~/cron.log 2>&1
 30 4 * * * steamcmd +login anonymous +quit
 59 20 * * 3 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py announce_1_minute
 00 21 * * 3 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py start_session
