@@ -28,3 +28,4 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
 59 20 * * 3 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py announce_1_minute
 00 21 * * 3 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py start_session
 00 23 * * 3 cd /home/heat/server/config/Scripts && /usr/bin/python3 create_autorun.py skip_to_new_session
+* * * * * /usr/bin/python3 /home/heat/apply_web_session.py >> /home/heat/apply_web_session.log 2>&1

@@ -28,3 +28,4 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
 59 20 * * 5 cd /home/tripleheat/server/config/Scripts && /usr/bin/python3 create_autorun.py announce_1_minute
 00 21 * * 5 cd /home/tripleheat/server/config/Scripts && /usr/bin/python3 create_autorun.py start_session
 00 23 * * 5 cd /home/tripleheat/server/config/Scripts && /usr/bin/python3 create_autorun.py skip_to_new_session
+* * * * * /usr/bin/python3 /home/tripleheat/apply_web_session.py >> /home/tripleheat/apply_web_session.log 2>&1
