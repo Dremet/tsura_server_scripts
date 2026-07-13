@@ -13,3 +13,7 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
 
 # process admin build-and-assign-car requests
 * * * * * /home/career/process_build_requests.sh >> /home/career/build_requests.log 2>&1
+
+# Tuesdays 00:00: assign next Monday's challenges (visible on the website all week;
+# the Monday-20:55 prep keeps existing rows and only fills in late enrollments)
+0 0 * * 2 /home/career/run_assign_objectives.sh >> /home/career/assign_objectives.log 2>&1
