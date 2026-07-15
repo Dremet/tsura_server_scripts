@@ -82,7 +82,7 @@ def build_driver_vehicle(
         "filename": _sanitize_filename(display_name),
         "maker": maker,
         "makerSteamId64": int(steam_id64),
-        "finalized": True,
+        "finalized": False,  # editable — drivers may open their car in the editor
         "physics": physics,
     }
     if description is not None:
