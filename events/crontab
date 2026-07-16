@@ -24,3 +24,6 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
 # m h  dom mon dow   command
 15 4 * * * steamcmd +login anonymous +quit
 15 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
+# 05:20 (after the 05:15 restart): re-apply the tsura.org web admin list —
+# TSU loads admins from game.json at boot and forgets runtime /admins changes
+20 5 * * * /usr/bin/python3 /home/events/apply_web_admins.py >> /home/events/apply_web_admins.log 2>&1
