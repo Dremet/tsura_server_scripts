@@ -49,7 +49,7 @@ BADGE = "<color=#20c997>[Hotlapping]</color>"
 
 # False = shadow (log only, behaviour unchanged). True = armed (capture in-game
 # combo changes and restore them after the nightly restart).
-LIVE_RESTORE = False
+LIVE_RESTORE = True
 
 SETUP_KEYS = ("track", "vehicle", "hotlap_behind_distance", "events_per_session")
 
