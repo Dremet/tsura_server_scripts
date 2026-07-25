@@ -25,3 +25,5 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
 0 4 * * * steamcmd +login anonymous +quit
 0 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
 * * * * * /usr/bin/python3 /home/hotlapping/apply_web_config.py >> /home/hotlapping/apply_web_config.log 2>&1
+# keep tsura.org upload dirs group-writable (TSU resets them on in-game content import)
+* * * * * /home/hotlapping/fix_upload_perms.sh
