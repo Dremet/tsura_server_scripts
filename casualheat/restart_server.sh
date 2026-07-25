@@ -6,6 +6,15 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/heat/.local/share/Steam/server/lin
 # Change directory to where your game server executable is located
 cd ~/server
 
+# Keep the tsura.org upload dirs writable for the website (group tsu +
+# setgid). If those bits get lost, panel uploads die with "Permission
+# denied" -- this makes every restart self-heal.
+for d in config/Vehicles config/Levels; do
+    [ -d "$d" ] || mkdir -p "$d"
+    chgrp tsu "$d" 2>/dev/null
+    chmod 2775 "$d" 2>/dev/null
+done
+
 # Stop the game server (only if it's running under the steam user)
 pkill -u heat TSUs.x86_64
 
