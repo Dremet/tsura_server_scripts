@@ -6,7 +6,7 @@
     "aiSkillLevel2": 1,
     "aiSkillLevel2Percentage": 50,
     "shuffleOrder": true,
-    "humanStartPosition": 2,
+    "humanStartPosition": 0,
     "forcedStartPosition": 20,
     "forceVehicleSelection": false,
     "forcedAIVehicle": 0,

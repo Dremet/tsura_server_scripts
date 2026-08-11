@@ -145,7 +145,12 @@ def build_session(plan, parts, out_path, ai_fill=None):
     # the template's values alone".
     drafting = plan.get("drafting") or {}
 
+    # McVizn's export is the baseline; the web config wins over it, so bot
+    # strength and where humans start are configured in one place instead of
+    # being frozen into the parts bin. Without this only aiFill ever came from
+    # the config -- everything else in the archive stayed on the export's values.
     ai = copy.deepcopy(parts.ai)
+    ai.update(plan.get("ai") or {})
     if ai_fill is not None:
         ai["aiFill"] = int(ai_fill)
 

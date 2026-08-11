@@ -78,17 +78,19 @@ DEFAULT_CONFIG = {
     # quicker in a tow and keeps the original 14%.
     "drafting": {"maxDraftingDistance": 35, "draftingSpeedEffect": 18},
     "drafting_by_vehicle": {"McTopper v1": {"draftingSpeedEffect": 14}},
-    # Humans start behind the bots and the bots wear a [BOT] tag, both from
-    # McVizn's exported session (2026-07-31). His skill 10 (= Custom1, an AI
-    # group the server does not even have a file for) was too strong, so the
-    # bots run on 3 = Medium since 2026-08-11. aiSkillLevel1/2 only matter for
-    # 100 = Mixed.
+    # Bots wear a [BOT] tag, from McVizn's exported session (2026-07-31).
+    # His skill 10 (= Custom1, an AI group the server does not even have a file
+    # for) was too strong, so the bots run on 3 = Medium since 2026-08-11.
+    # aiSkillLevel1/2 only matter for 100 = Mixed.
+    # humanStartPosition is HumanStartPositionType: 0 = Default (the grid is not
+    # rigged), 1 = ForceAtFirstEvent, 2 = ForceAlways. It sat on 2 with
+    # forcedStartPosition 20, which pushed every human to the back of the grid.
     "ai": {
         "aiSkill": 3,
         "aiSkillLevel1": 3,
         "aiSkillLevel2": 1,
         "aiSkillLevel2Percentage": 50,
-        "humanStartPosition": 2,
+        "humanStartPosition": 0,
         "aiClanTag": "BOT",
     },
     # Names and GUIDs resolved against the live server; lap counts and camera
