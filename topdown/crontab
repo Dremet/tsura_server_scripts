@@ -1,0 +1,12 @@
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
+# Taeglicher steamcmd-Selbstupdate + Neustart. Slots 4:50/5:50 sind frei
+# (hotlapping 4:00/5:00, events 4:15/5:15, heat+tripleheat 4:30/5:30,
+# career 4:45/5:45).
+50 4 * * * steamcmd +login anonymous +quit
+50 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
+# Watchdog: startet den Heat-Controller, falls er nicht laeuft (tut sonst nichts).
+# Ohne ihn bleibt das Matchmaking nach einem Absturz tot, bis jemand hinschaut.
+* * * * * /home/topdown/start_controller.sh
+# Haelt die Upload-Ordner fuer tsura.org schreibbar (TSU setzt die Rechte
+# zurueck, wenn ein Spieler in-game Content teilt).
+* * * * * /home/topdown/fix_upload_perms.sh

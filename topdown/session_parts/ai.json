@@ -1,0 +1,23 @@
+{
+    "aiFill": 14,
+    "useDebugAIWithoutDrivingLines": false,
+    "aiSkill": 3,
+    "aiSkillLevel1": 3,
+    "aiSkillLevel2": 1,
+    "aiSkillLevel2Percentage": 50,
+    "shuffleOrder": true,
+    "humanStartPosition": 2,
+    "forcedStartPosition": 20,
+    "forceVehicleSelection": false,
+    "forcedAIVehicle": 0,
+    "forcedHumanVehicle": 0,
+    "triggerHappiness": 50,
+    "deterministicRandom": false,
+    "randomSeed": 0,
+    "forceAIClanTag": true,
+    "aiClanTag": "BOT",
+    "adjustPitStrategy": false,
+    "pitStrategyDebug": false,
+    "stintLengthMultiplier": 100,
+    "stintLengthRandomAdd": 10
+}
