@@ -7,15 +7,18 @@ camera. Per-track cameras are therefore only possible by handing the server a
 finished archive before the session begins, which is what this module builds.
 
 The archive is assembled from McVizn's exported session, which serves as a parts
-bin: his `camera5.cam` files are copied in **byte for byte**, so the cameras are
-exactly his -- no decoding, no rounding, no guessing at fields.
+bin. A track he exported contributes its `camera5.cam` **byte for byte** unless
+the config overrides camera values; a track he never exported is built from its
+name and GUID alone, with a camera borrowed from another track or from the
+configured default, so a new track can be added from the admin panel without
+waiting for a fresh export.
 
 Layout (per event NNN, 1-based):
     levels.json          the track list, one entry per event
-    NNN-level.json       which track          (per track, from the parts bin)
-    NNN-camera5.cam      its camera           (per track, copied verbatim)
+    NNN-level.json       which track          (parts bin, or built from the GUID)
+    NNN-camera5.cam      its camera           (verbatim, or encoded from config)
     NNN-event.json       race settings        (template + laps/mode/points)
-    NNN-vehicles.json    the car              (shared template)
+    NNN-vehicles.json    the car              (one per race -- the car pool)
     NNN-ai.json          bot settings         (shared template)
 """
 
@@ -23,6 +26,9 @@ import copy
 import json
 import os
 import zipfile
+
+from . import camfile
+from . import guid as guid_mod
 
 RACE_MODE_RACE = 0
 RACE_MODE_HOTLAPPING = 1
@@ -40,6 +46,33 @@ CONTACT_RULES_EQUAL_GHOSTS = 3     # no collisions -- what a qualifying wants
 # "forcedCameraPreset" in the JSON encoding; 25 == console value 9 == Preset5,
 # which is the slot McVizn's camera5.cam files occupy.
 CAMERA_PRESET_JSON = 25
+
+# Last resort for a track that has neither an exported camera nor one borrowed
+# from a sibling: McVizn's overhead settings with the heading left at zero,
+# because where north is can only be known per track. It keeps a new track
+# playable in top-down view until someone aims the camera properly; the panel's
+# "default camera" overrides every value here.
+DEFAULT_CAMERA = {
+    "cameraPosition": 0,                 # FixedAngle
+    "followHistory": 0.0,
+    "distance": 115.0,
+    "verticalAngle": 49.64517593383789,
+    "horizontalAngle": 0.0,
+    "behindVelocitySpeed": 20.0,
+    "smoothingTime": 0.0,
+    "lookMode": 0,
+    "rankLockedTarget": False,
+    "fov": 23.605838775634766,
+    "targetYPosition": 0.5,
+    "predictionTime": 0.8846836686134338,
+    "predictionSmoothTime": 0.5,
+    "blockReactionTime": 1.5,
+    "followSecondaryTargetAmount": 50,
+    "tracksideSwitchPhase": 50,
+    "keepCloseInFreeCamera": False,
+    "tracksideInterval": 600,
+    "tracksideCameraFixed": False,
+}
 
 
 def _read_json(path):
@@ -124,6 +157,97 @@ class PartsBin:
     def missing(self, track_names):
         return [t for t in track_names if t not in self.tracks]
 
+    def level(self, track_name):
+        entry = self.tracks.get(track_name)
+        return entry["level"] if entry else None
+
+    def camera_bytes(self, track_name):
+        """The exported camera file, unchanged, or None."""
+        entry = self.tracks.get(track_name)
+        if not entry:
+            return None
+        with open(entry["camera"], "rb") as fh:
+            return fh.read()
+
+    def camera_props(self, track_name):
+        """The exported camera decoded into properties, or None."""
+        entry = self.tracks.get(track_name)
+        if not entry:
+            return None
+        try:
+            return camfile.decode_file(entry["camera"])
+        except (OSError, ValueError):
+            return None
+
+
+def build_level(track_name, track_guid):
+    """A level entry for a track the parts bin does not have.
+
+    The server matches a level by its GUID, so name plus GUID is enough --
+    creation time, author and description are cosmetic. This is what lets an
+    admin add a track in the panel without McVizn exporting a session first.
+    """
+    if not track_guid:
+        raise ValueError(f"no session parts and no GUID for track {track_name!r}")
+    return {
+        "guid": guid_mod.to_doc(track_guid),
+        "creationTime": 0,
+        "name": track_name,
+        "makerId": 0,
+        "levelType": 0,
+        "description": "",
+    }
+
+
+def build_vehicles(template, vehicle_guid):
+    """The car for one race: the template with this race's GUID substituted.
+
+    Every event in the archive carries its own vehicles.json, which is how one
+    car per race works at all. Anything else in the template (`selectionType`,
+    and whatever a future export adds) is kept.
+    """
+    doc = copy.deepcopy(template)
+    if not vehicle_guid:
+        return doc
+    entries = doc.get("possibleVehicles") or [{}]
+    entry = copy.deepcopy(entries[0])
+    entry["m_guid"] = guid_mod.to_doc(vehicle_guid)
+    doc["possibleVehicles"] = [entry]
+    return doc
+
+
+def resolve_camera(rnd, parts, default_camera=None):
+    """This round's camera file, plus a word on where it came from.
+
+    Priority: the config's own values (that is what the panel edits) over the
+    exported camera, then a camera borrowed from another track, then the
+    configured default. An exported camera with nothing overriding it is passed
+    through byte for byte, so the common case stays exactly as McVizn made it.
+    """
+    track = rnd.get("track", "")
+    overrides = {k: v for k, v in (rnd.get("camera_settings") or {}).items()
+                 if v is not None}
+    exported = parts.camera_props(track)
+
+    if exported is not None and not overrides:
+        return parts.camera_bytes(track), "exported"
+
+    base, source = exported, "exported"
+    if base is None:
+        borrowed = rnd.get("camera_from") or ""
+        base = parts.camera_props(borrowed) if borrowed else None
+        source = f"copied from {borrowed}"
+    if base is None:
+        base = dict(DEFAULT_CAMERA)
+        base.update(default_camera or {})
+        source = "default"
+
+    props = dict(base)
+    props.update(overrides)
+    if overrides:
+        source += " + config"
+    return camfile.encode(props), source
+
 
 def build_session(plan, parts, out_path, ai_fill=None):
     """Write the session archive for `plan` and return the list of event names.
@@ -134,16 +258,14 @@ def build_session(plan, parts, out_path, ai_fill=None):
     rounds = plan.get("rounds") or []
     if not rounds:
         raise ValueError("cannot build a session with no rounds")
-    missing = parts.missing([r["track"] for r in rounds])
-    if missing:
-        raise ValueError(f"no session parts for: {', '.join(missing)}")
 
     quali_points = plan.get("quali_points", [1])
     race_points = plan.get("race_points", [10, 6, 4, 3, 2, 1])
     quali_laps = int(plan.get("quali_laps", 1))
-    # Already resolved for this heat's car by the controller; empty means "leave
-    # the template's values alone".
-    drafting = plan.get("drafting") or {}
+    # Resolved per round for that round's car by the controller; the heat-wide
+    # value is the fallback. Empty means "leave the template's values alone".
+    heat_drafting = plan.get("drafting") or {}
+    default_camera = plan.get("default_camera_settings") or {}
 
     # McVizn's export is the baseline; the web config wins over it, so bot
     # strength and where humans start are configured in one place instead of
@@ -154,19 +276,24 @@ def build_session(plan, parts, out_path, ai_fill=None):
     if ai_fill is not None:
         ai["aiFill"] = int(ai_fill)
 
-    events = []          # (level_doc, camera_path, event_doc)
+    events = []          # (level_doc, camera_bytes, event_doc, vehicles_doc)
     for rnd in rounds:
-        entry = parts.tracks[rnd["track"]]
+        level = parts.level(rnd["track"]) or build_level(rnd["track"],
+                                                         rnd.get("track_guid"))
+        camera, _source = resolve_camera(rnd, parts, default_camera)
+        vehicles = build_vehicles(parts.vehicles, rnd.get("vehicle_guid"))
+        drafting = rnd.get("drafting") or heat_drafting
         for quali in (True, False):
             events.append((
-                entry["level"],
-                entry["camera"],
+                level,
+                camera,
                 build_event(parts.event_template,
                             laps=quali_laps if quali else rnd.get("laps", 8),
                             quali=quali,
                             quali_points=quali_points,
                             race_points=race_points,
                             drafting=drafting),
+                vehicles,
             ))
 
     tmp = out_path + ".tmp"
@@ -174,19 +301,33 @@ def build_session(plan, parts, out_path, ai_fill=None):
         zf.writestr("levels.json",
                     json.dumps(build_levels_index([e[0] for e in events]),
                                indent=1, ensure_ascii=False))
-        for index, (level, camera_path, event) in enumerate(events, 1):
+        for index, (level, camera, event, vehicles) in enumerate(events, 1):
             prefix = f"{index:03d}"
             zf.writestr(f"{prefix}-level.json",
                         json.dumps(level, indent=1, ensure_ascii=False))
             zf.writestr(f"{prefix}-event.json",
                         json.dumps(event, indent=1, ensure_ascii=False))
             zf.writestr(f"{prefix}-vehicles.json",
-                        json.dumps(parts.vehicles, indent=1, ensure_ascii=False))
+                        json.dumps(vehicles, indent=1, ensure_ascii=False))
             zf.writestr(f"{prefix}-ai.json",
                         json.dumps(ai, indent=1, ensure_ascii=False))
-            # Copied verbatim: this is the whole point of going through a
-            # session archive rather than writing camera.json ourselves.
-            with open(camera_path, "rb") as fh:
-                zf.writestr(f"{prefix}-camera5.cam", fh.read())
+            zf.writestr(f"{prefix}-camera5.cam", camera)
     os.replace(tmp, out_path)
     return [f"{i:03d}" for i in range(1, len(events) + 1)]
+
+
+def describe_session(plan, parts):
+    """One line per round: what the archive will contain and where it came from.
+
+    Worth logging -- a borrowed or defaulted camera is otherwise invisible until
+    someone notices the track sitting sideways on screen.
+    """
+    lines = []
+    default_camera = plan.get("default_camera_settings") or {}
+    for i, rnd in enumerate(plan.get("rounds") or [], 1):
+        _camera, source = resolve_camera(rnd, parts, default_camera)
+        level = "parts" if parts.has(rnd["track"]) else "built from GUID"
+        lines.append(f"round {i}: {rnd['track']} ({level}) / "
+                     f"{rnd.get('vehicle') or '?'} / {rnd.get('laps')} laps / "
+                     f"camera {source}")
+    return lines

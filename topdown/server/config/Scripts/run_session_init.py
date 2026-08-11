@@ -71,8 +71,16 @@ def build_commands(plan):
         cmds.append(f"/loadsession {quoted(session_name)}")
     else:
         # Fallback if the archive could not be built -- the heat still runs,
-        # just with the default camera.
-        cmds += ["/vehicles /clear", f"/vehicle /add {quoted(plan['vehicle'])}"]
+        # just with the default camera. The console has one vehicle list for
+        # the whole session, so a car pool cannot be honoured here: every car
+        # of the heat is offered and players pick.
+        cars = []
+        for rnd in rounds:
+            car = rnd.get("vehicle") or plan.get("vehicle", "")
+            if car and car not in cars:
+                cars.append(car)
+        cmds.append("/vehicles /clear")
+        cmds += [f"/vehicle /add {quoted(car)}" for car in cars]
         cmds.append("/levels /clear")
         for rnd in rounds:
             cmds += [f"/level /add {quoted(rnd['track'])}"] * 2
@@ -88,7 +96,9 @@ def build_commands(plan):
             cmds.append(f"/set ai.aiClanTag {ai['aiClanTag']}")
         cmds.append("/points.pointsForFastestLap = 0")
 
-    names = ", ".join(r["track"] for r in rounds)
+    # The car is named per track: it can differ from race to race.
+    names = ", ".join(f"{r['track']} ({r['vehicle']})" if r.get("vehicle")
+                      else r["track"] for r in rounds)
     cmds.append(f"/broadcast {BADGE} Heat #{plan.get('heat_id', '?')} -- "
                 f"{len(rounds)} tracks, one lap of qualifying then a race on each.")
     cmds.append(f"/broadcast {BADGE} {GREY}{names}</color>")

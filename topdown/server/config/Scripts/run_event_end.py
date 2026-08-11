@@ -49,7 +49,10 @@ def main():
         "phase": progress.get("phase", "quali"),
         "track": rnd.get("track", ""),
         "track_guid": rnd.get("track_guid", ""),
-        "vehicle": plan.get("vehicle", ""),
+        # Per round since 2026-08-12: with a car pool the heat as a whole no
+        # longer has one car, each race does.
+        "vehicle": rnd.get("vehicle") or plan.get("vehicle", ""),
+        "vehicle_guid": rnd.get("vehicle_guid") or plan.get("vehicle_guid", ""),
         "laps": rnd.get("laps"),
         "ai_lines": rnd.get("ai_lines", False),
     }

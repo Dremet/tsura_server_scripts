@@ -61,8 +61,12 @@ WHO_TIMEOUT = 5.0
 WHO_INTERVAL = 30.0
 
 DEFAULT_CONFIG = {
-    "vehicle": "VoZzer",
-    "vehicle_guid": "17xxzrmve5gb-3868ch8",
+    # The car pool: one of these is drawn per race (André, 2026-08-11). Both
+    # have AI driving lines for every track the server knows.
+    "vehicles": [
+        {"name": "VoZzer", "guid": "17xxzrmve5gb-3868ch8", "weight": 1.0},
+        {"name": "McTopper v1", "guid": "128pn7m9fecb-32z2vmh", "weight": 1.0},
+    ],
     "tracks_per_heat": 4,
     "lap_bonus_max_pct": 20,
     "countdown_seconds": 90,
@@ -93,53 +97,29 @@ DEFAULT_CONFIG = {
         "humanStartPosition": 0,
         "aiClanTag": "BOT",
     },
-    # Names and GUIDs resolved against the live server; lap counts and camera
-    # angles taken from McVizn's session export (the .cam files carry the same
-    # distance and vertical angle everywhere, only the heading differs per
-    # track). The admin panel edits these.
+    # Names and GUIDs resolved against the live server; lap counts from McVizn.
+    # No camera values here on purpose: every one of these tracks has an
+    # exported camera5.cam in the parts bin, and that file is the truth. A
+    # track only needs `camera_settings` once someone edits the camera in the
+    # panel, or `camera_from` to borrow another track's.
     "tracks": [
         {"name": "Buffalo Hill - Rallycross v1.0", "guid": "z1s768q5723-2z9rhj7",
-         "laps": 12, "type": "Rallycross", "pit": True, "weight": 1.0,
-         "camera_settings": {"cameraPosition": 7, "distance": 109.2385,
-                             "verticalAngle": 49.6452,
-                             "horizontalAngle": 345.97}},
+         "laps": 12, "type": "Rallycross", "pit": True, "weight": 1.0},
         {"name": "CSup - Lost Lagoons v1", "guid": "xvf09b5nq83-2xw55w3",
-         "laps": 6, "type": "Circuit", "pit": True, "weight": 1.0,
-         "camera_settings": {"cameraPosition": 7, "distance": 109.2385,
-                             "verticalAngle": 49.6452,
-                             "horizontalAngle": 90.65}},
+         "laps": 6, "type": "Circuit", "pit": True, "weight": 1.0},
         {"name": "CSup Sugar Hill V1.0", "guid": "z316kaggp23-2zcdqea",
-         "laps": 14, "type": "Circuit", "pit": True, "weight": 1.0,
-         "camera_settings": {"cameraPosition": 7, "distance": 109.2385,
-                             "verticalAngle": 49.6452,
-                             "horizontalAngle": 0.19}},
+         "laps": 14, "type": "Circuit", "pit": True, "weight": 1.0},
         {"name": "Maple Ridge v1.1", "guid": "13ng23pntnl3-3472zvj",
-         "laps": 14, "type": "Circuit", "pit": False, "weight": 1.0,
-         "camera_settings": {"cameraPosition": 7, "distance": 109.2385,
-                             "verticalAngle": 49.6452,
-                             "horizontalAngle": 98.25}},
+         "laps": 14, "type": "Circuit", "pit": False, "weight": 1.0},
         {"name": "Jonno Island v1.0", "guid": "139k2kmmzws3-33vswqr",
-         "laps": 8, "type": "Circuit", "pit": True, "weight": 1.0,
-         "camera_settings": {"cameraPosition": 7, "distance": 115.0,
-                             "verticalAngle": 49.6452,
-                             "horizontalAngle": 229.47}},
+         "laps": 8, "type": "Circuit", "pit": True, "weight": 1.0},
         {"name": "E.V.M.C. V1", "guid": "11kcwn867t23-329n370",
-         "laps": 10, "type": "Circuit", "pit": True, "weight": 1.0,
-         "camera_settings": {"cameraPosition": 7, "distance": 109.2385,
-                             "verticalAngle": 49.6452,
-                             "horizontalAngle": 90.06}},
-        # Added 2026-08-11 from McVizn's export; his camera sits further out
-        # (133.13) and slightly wider (fov 29.3) than on the older tracks.
+         "laps": 10, "type": "Circuit", "pit": True, "weight": 1.0},
+        # Added 2026-08-11 from McVizn's export.
         {"name": "Distant Island", "guid": "1d4pxkexwfv3-3dd3b8l",
-         "laps": 11, "type": "Circuit", "pit": True, "weight": 1.0,
-         "camera_settings": {"cameraPosition": 7, "distance": 133.1321,
-                             "verticalAngle": 48.4001,
-                             "horizontalAngle": 291.01}},
+         "laps": 11, "type": "Circuit", "pit": True, "weight": 1.0},
         {"name": "Kemora 1983 v1.0", "guid": "kmhb9dgbac3-2m6dead",
-         "laps": 11, "type": "Circuit", "pit": True, "weight": 1.0,
-         "camera_settings": {"cameraPosition": 7, "distance": 133.1321,
-                             "verticalAngle": 48.4001,
-                             "horizontalAngle": 40.88}},
+         "laps": 11, "type": "Circuit", "pit": True, "weight": 1.0},
     ],
     "ingame_admins": [],
 }
@@ -256,7 +236,13 @@ class Controller:
         plan["quali_points"] = self.config.get("quali", {}).get("points", [1])
         plan["race_points"] = self.config.get("race", {}).get("points",
                                                               [10, 6, 4, 3, 2, 1])
+        # Per round, because the car changes between races and the tow is a
+        # property of the car. The heat-wide value stays for the fallback path.
+        for rnd in plan.get("rounds") or []:
+            rnd["drafting"] = resolve_drafting(self.config, rnd.get("vehicle"))
         plan["drafting"] = resolve_drafting(self.config, plan.get("vehicle"))
+        plan["default_camera_settings"] = self.config.get(
+            "default_camera_settings", {})
         plan["admins"] = self.config.get("ingame_admins", [])
         plan["ai"] = self.config.get("ai", {})
         # 9 == "Preset5" on the console, which is what McVizn's session files
@@ -279,6 +265,8 @@ class Controller:
                                           ai_fill=plan["ai_fill"])
                 plan["session_name"] = SESSION_NAME
                 log(f"session archive built: {SESSION_PATH}")
+                for line in session_mod.describe_session(plan, parts):
+                    log(f"  {line}")
             except Exception as exc:                   # noqa: BLE001
                 log(f"could not build session archive ({exc}) -- "
                     f"falling back to individual commands")

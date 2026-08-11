@@ -169,11 +169,15 @@ def main():
         if 0 <= index < len(rounds):
             rnd = rounds[index]
             quali = progress.get("phase") != "race"
+            # The car is named with the track: the pool draws one per race, so
+            # players cannot assume it is the same as in the last round.
+            car = rnd.get("vehicle") or plan.get("vehicle", "")
+            where = f"{rnd['track']} ({car})" if car else rnd["track"]
             if quali:
-                line = (f"/broadcast {BADGE} Qualifying at {rnd['track']} -- "
+                line = (f"/broadcast {BADGE} Qualifying at {where} -- "
                         f"{plan.get('quali_laps', 1)} lap for grid position.")
             else:
-                line = (f"/broadcast {BADGE} Race at {rnd['track']} -- "
+                line = (f"/broadcast {BADGE} Race at {where} -- "
                         f"{rnd.get('laps', FALLBACK_LAPS)} laps. "
                         f"{GREY}Grid from qualifying.</color>")
             commands = [line]

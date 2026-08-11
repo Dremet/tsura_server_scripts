@@ -1,9 +1,10 @@
 """Heat composition and scoring.
 
 A heat is four tracks, each run as a one-lap qualifying followed by a race, so
-eight game events in total. This module decides what gets driven and how it is
-scored. It is deliberately free of I/O and of wall-clock time: the caller passes
-in a random source, so a heat can be replayed exactly in tests.
+eight game events in total. This module decides what gets driven -- which
+tracks, how many laps and which car -- and how it is scored. It is deliberately
+free of I/O and of wall-clock time: the caller passes in a random source, so a
+heat can be replayed exactly in tests.
 
 Scoring is McVizn's (2026-07-31):
   qualifying  1 point for P1, nothing else
@@ -52,6 +53,53 @@ def has_ai_line(ai_pairs, level_guid, vehicle_guid):
     return (level_guid.lower(), vehicle_guid.lower()) in ai_pairs
 
 
+def vehicle_pool(config):
+    """The cars a heat may draw from, as a list of {name, guid, weight}.
+
+    The config used to name exactly one car (`vehicle`/`vehicle_guid`); a pool
+    lives in `vehicles`. Both are accepted so an old config keeps working, and
+    the single-car form is simply a pool of one.
+    """
+    pool = []
+    for entry in config.get("vehicles") or []:
+        if isinstance(entry, dict) and entry.get("name"):
+            pool.append({"name": entry["name"],
+                         "guid": entry.get("guid", ""),
+                         "weight": float(entry.get("weight", 1) or 0)})
+    if pool:
+        return pool
+    if config.get("vehicle"):
+        return [{"name": config["vehicle"],
+                 "guid": config.get("vehicle_guid", ""), "weight": 1.0}]
+    return []
+
+
+def _weighted_draw(pool, rng):
+    """Draw one entry, honouring weights; `pool` is modified."""
+    weights = [float(p.get("weight", 1)) for p in pool]
+    pick = rng.choices(pool, weights=weights, k=1)[0]
+    pool.remove(pick)
+    return pick
+
+
+def pick_vehicles(vehicles, count, rng):
+    """Choose the car for each of `count` races (André, 2026-08-11: per race).
+
+    Weight 0 disables a car, same convention as the tracks. Cars are drawn from
+    a bag that is refilled once empty, so with two cars and four races each is
+    used twice instead of the same one possibly coming up four times in a row.
+    """
+    usable = [v for v in vehicles if float(v.get("weight", 1)) > 0]
+    if not usable:
+        return []
+    chosen, bag = [], []
+    for _ in range(count):
+        if not bag:
+            bag = list(usable)
+        chosen.append(_weighted_draw(bag, rng))
+    return chosen
+
+
 def pick_tracks(tracks, count, rng):
     """Choose `count` distinct tracks, honouring per-track weights.
 
@@ -63,14 +111,24 @@ def pick_tracks(tracks, count, rng):
     if not usable:
         return []
     count = min(count, len(usable))
-    chosen = []
     pool = list(usable)
-    for _ in range(count):
-        weights = [float(t.get("weight", 1)) for t in pool]
-        pick = rng.choices(pool, weights=weights, k=1)[0]
-        chosen.append(pick)
-        pool.remove(pick)
-    return chosen
+    return [_weighted_draw(pool, rng) for _ in range(count)]
+
+
+def lap_bonus_pct(track, default=DEFAULT_LAP_BONUS_PCT):
+    """How much a track's lap count may grow, in percent.
+
+    Per track, because a two-minute lap and a thirty-second lap do not want the
+    same swing; the global value stays as the fallback for tracks that say
+    nothing. McVizn confirmed percent over absolute laps (2026-08-11).
+    """
+    value = track.get("lap_bonus_pct")
+    if value in (None, ""):
+        return float(default)
+    try:
+        return max(0.0, float(value))
+    except (TypeError, ValueError):
+        return float(default)
 
 
 def laps_for(track, rng, bonus_pct=DEFAULT_LAP_BONUS_PCT):
@@ -82,7 +140,7 @@ def laps_for(track, rng, bonus_pct=DEFAULT_LAP_BONUS_PCT):
     base = int(track.get("laps", 0) or 0)
     if base < 1:
         base = 1
-    bonus = rng.uniform(0, max(0.0, bonus_pct) / 100.0)
+    bonus = rng.uniform(0, lap_bonus_pct(track, bonus_pct) / 100.0)
     return base + int(base * bonus + 0.999) if bonus > 0 else base
 
 
@@ -93,31 +151,42 @@ def build_heat_plan(config, rng, ai_pairs=frozenset()):
     and handed to the results layer unchanged.
     """
     tracks = config.get("tracks") or []
-    vehicle = config.get("vehicle") or ""
-    vehicle_guid = config.get("vehicle_guid") or ""
     per_heat = int(config.get("tracks_per_heat", DEFAULT_TRACKS_PER_HEAT))
     bonus = float(config.get("lap_bonus_max_pct", DEFAULT_LAP_BONUS_PCT))
 
     picked = pick_tracks(tracks, per_heat, rng)
+    cars = pick_vehicles(vehicle_pool(config), len(picked), rng)
     rounds = []
-    for t in picked:
+    for i, t in enumerate(picked):
+        car = cars[i] if i < len(cars) else {}
         rounds.append({
             "track": t.get("name", ""),
             "track_guid": t.get("guid", ""),
             "track_type": t.get("type", ""),
             "laps": laps_for(t, rng, bonus),
             "pit": bool(t.get("pit", False)),
-            "ai_lines": has_ai_line(ai_pairs, t.get("guid", ""), vehicle_guid),
+            # One car per race, not per heat (André, 2026-08-11). It fits the
+            # way a heat is built anyway: every event gets its own entry in the
+            # session archive, so the car can change between them.
+            "vehicle": car.get("name", ""),
+            "vehicle_guid": car.get("guid", ""),
+            "ai_lines": has_ai_line(ai_pairs, t.get("guid", ""),
+                                    car.get("guid", "")),
             # Players default to a chase camera, which makes a top-down series
             # look wrong. Each track needs its own horizontal angle so the
-            # circuit sits sensibly in frame; the event-init hook writes these
-            # into camera.json just before the track loads.
+            # circuit sits sensibly in frame; the session archive carries these
+            # as the track's camera5.cam.
             "camera_settings": t.get("camera_settings")
             or config.get("camera_settings"),
+            # Which track to borrow a camera from when this one has none.
+            "camera_from": t.get("camera_from", ""),
         })
+    first = rounds[0] if rounds else {}
     return {
-        "vehicle": vehicle,
-        "vehicle_guid": vehicle_guid,
+        # The heat's first car. Only the fallback path without a session archive
+        # uses this -- with an archive every round carries its own.
+        "vehicle": first.get("vehicle", ""),
+        "vehicle_guid": first.get("vehicle_guid", ""),
         "quali_laps": int(config.get("quali", {}).get("laps", 1)),
         "rounds": rounds,
     }
