@@ -131,12 +131,18 @@ def lap_bonus_pct(track, default=DEFAULT_LAP_BONUS_PCT):
         return float(default)
 
 
-def laps_for(track, rng, bonus_pct=DEFAULT_LAP_BONUS_PCT):
+def laps_for(track, rng, bonus_pct=DEFAULT_LAP_BONUS_PCT, override=None):
     """Lap count for one race: the configured base plus a random 0-`bonus_pct`%.
 
     McVizn asked for "10-20% more, but never fewer", so the bonus only ever
     rounds up: a 10-lap track runs 10 to 12 laps, never 9.
+
+    `override` forces every race to the same short distance while the series is
+    being tested, without touching the real lap counts -- clearing it puts all
+    of them back at once.
     """
+    if override:
+        return int(override)
     base = int(track.get("laps", 0) or 0)
     if base < 1:
         base = 1
@@ -153,6 +159,8 @@ def build_heat_plan(config, rng, ai_pairs=frozenset()):
     tracks = config.get("tracks") or []
     per_heat = int(config.get("tracks_per_heat", DEFAULT_TRACKS_PER_HEAT))
     bonus = float(config.get("lap_bonus_max_pct", DEFAULT_LAP_BONUS_PCT))
+    # Test phase: every race the same short distance, real lap counts untouched.
+    override = int(config.get("laps_override", 0) or 0)
 
     picked = pick_tracks(tracks, per_heat, rng)
     cars = pick_vehicles(vehicle_pool(config), len(picked), rng)
@@ -163,7 +171,7 @@ def build_heat_plan(config, rng, ai_pairs=frozenset()):
             "track": t.get("name", ""),
             "track_guid": t.get("guid", ""),
             "track_type": t.get("type", ""),
-            "laps": laps_for(t, rng, bonus),
+            "laps": laps_for(t, rng, bonus, override),
             "pit": bool(t.get("pit", False)),
             # One car per race, not per heat (André, 2026-08-11). It fits the
             # way a heat is built anyway: every event gets its own entry in the

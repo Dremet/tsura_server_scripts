@@ -121,6 +121,18 @@ class TestLaps(unittest.TestCase):
         track = {"laps": 10, "lap_bonus_pct": 0}
         self.assertEqual({heat.laps_for(track, rng, 20) for _ in range(50)}, {10})
 
+    def test_test_phase_override_beats_everything(self):
+        rng = random.Random(3)
+        track = {"laps": 14, "lap_bonus_pct": 50}
+        self.assertEqual({heat.laps_for(track, rng, 20, 3) for _ in range(50)},
+                         {3}, "no variance while a fixed distance is forced")
+
+    def test_clearing_the_override_restores_the_real_lap_counts(self):
+        rng = random.Random(3)
+        track = {"laps": 14}
+        for override in (0, None, ""):
+            self.assertGreaterEqual(heat.laps_for(track, rng, 0, override), 14)
+
     def test_nonsense_variance_falls_back_to_the_global_one(self):
         self.assertEqual(heat.lap_bonus_pct({"lap_bonus_pct": "später"}, 20), 20)
         self.assertEqual(heat.lap_bonus_pct({"lap_bonus_pct": None}, 20), 20)
@@ -203,6 +215,11 @@ class TestHeatPlan(unittest.TestCase):
         for rnd in plan["rounds"]:
             self.assertEqual(rnd["ai_lines"], rnd["vehicle"] == "VoZzer",
                              rnd["track"])
+
+    def test_the_test_phase_override_applies_to_every_round(self):
+        plan = heat.build_heat_plan(self._config(laps_override=3),
+                                    random.Random(5), set())
+        self.assertEqual([r["laps"] for r in plan["rounds"]], [3, 3, 3, 3])
 
     def test_same_seed_reproduces_the_same_heat(self):
         a = heat.build_heat_plan(self._config(), random.Random(42), set())

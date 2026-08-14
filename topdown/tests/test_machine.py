@@ -184,8 +184,9 @@ class TestHeatProgress(unittest.TestCase):
 
     def test_next_heat_starts_after_the_cooldown(self):
         m = make_machine()
-        run_heat_to_end(m)
+        start_heat(m)
         first = m.heat_id
+        run_heat_to_end(m)                 # ends the heat, prepares the next
         self.assertEqual(m.state, COOLDOWN)
         m.tick(1000)
         self.assertEqual(m.state, HEAT)
@@ -197,6 +198,93 @@ class TestHeatProgress(unittest.TestCase):
         m.set_players({}, 95)
         m.on_event_ended(100)          # bots finish the current event
         self.assertEqual(m.state, IDLE)
+
+
+class TestSessionHandover(unittest.TestCase):
+    """The server starts a session on its own about 30s after one ends.
+
+    Replays what the log showed on 2026-08-13: the heat ended at 22:34:13, the
+    server opened a new session at 22:34:44 all by itself, and the controller
+    aborted it at 22:35:14 to start the heat it had just built -- so players got
+    a heat announcement, a lobby countdown, and then a restart.
+    """
+
+    def test_the_next_heat_is_built_when_the_old_one_ends(self):
+        m = make_machine()
+        start_heat(m)
+        first = m.heat_id
+        for i in range(m.events_total):
+            m.on_event_ended(100 + i)
+        self.assertEqual(m.state, COOLDOWN)
+        self.assertTrue(m.pending_session, "the next heat must be on disk "
+                                           "before the server cycles")
+        self.assertNotEqual(m.heat_id, first)
+
+    def test_the_servers_own_session_becomes_the_heat(self):
+        m = make_machine()
+        start_heat(m)
+        for i in range(m.events_total):
+            m.on_event_ended(100 + i)
+        planned = m.heat_id
+        cmds = m.on_session_started(131)        # server cycled on its own
+        self.assertEqual(m.state, HEAT)
+        self.assertEqual(m.heat_id, planned, "same heat, no new number")
+        self.assertEqual(m.events_done, 0)
+        self.assertEqual(cmds, [], "nothing is sent -- the session is already up")
+
+    def test_no_session_restart_once_the_server_cycled(self):
+        m = make_machine()
+        start_heat(m)
+        for i in range(m.events_total):
+            m.on_event_ended(100 + i)
+        m.on_session_started(131)
+        cmds = m.tick(1000)                     # long past the cooldown
+        self.assertNotIn("/abortsession Yes", cmds,
+                         "the running heat must not be torn down")
+        self.assertEqual(m.state, HEAT)
+
+    def test_a_server_that_does_not_cycle_is_asked_for_a_session(self):
+        m = make_machine()
+        start_heat(m)
+        for i in range(m.events_total):
+            m.on_event_ended(100 + i)
+        planned = m.heat_id
+        cmds = m.tick(1000)                     # cooldown expired, no session
+        self.assertIn("/abortsession Yes", cmds)
+        self.assertIn("/continue", cmds)
+        self.assertEqual(m.state, HEAT)
+        self.assertEqual(m.heat_id, planned, "the built heat is kept")
+        self.assertTrue(m.awaiting_session)
+
+    def test_a_session_that_arrives_late_is_still_the_heat(self):
+        m = make_machine()
+        start_heat(m)
+        for i in range(m.events_total):
+            m.on_event_ended(100 + i)
+        m.tick(1000)                            # fallback asked for a session
+        m.on_session_started(1001)
+        self.assertEqual(m.state, HEAT)
+        self.assertFalse(m.awaiting_session)
+
+    def test_an_emptying_lobby_drops_the_prepared_heat(self):
+        m = make_machine()
+        start_heat(m)
+        for i in range(m.events_total):
+            m.on_event_ended(100 + i)
+        self.assertTrue(m.pending_session)
+        m.set_players({}, 150)                  # everyone leaves in the break
+        self.assertEqual(m.state, IDLE)
+        self.assertFalse(m.pending_session)
+        m.on_session_started(160)               # server cycles anyway
+        self.assertEqual(m.state, IDLE, "no heat without players")
+
+    def test_an_abandoned_heat_prepares_nothing(self):
+        m = make_machine()
+        start_heat(m)
+        m.set_players({}, 95)
+        m.on_event_ended(100)
+        self.assertEqual(m.state, IDLE)
+        self.assertFalse(m.pending_session)
 
 
 class TestAbandonment(unittest.TestCase):

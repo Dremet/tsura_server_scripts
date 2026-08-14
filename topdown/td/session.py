@@ -271,18 +271,23 @@ def build_session(plan, parts, out_path, ai_fill=None):
     # strength and where humans start are configured in one place instead of
     # being frozen into the parts bin. Without this only aiFill ever came from
     # the config -- everything else in the archive stayed on the export's values.
-    ai = copy.deepcopy(parts.ai)
-    ai.update(plan.get("ai") or {})
-    if ai_fill is not None:
-        ai["aiFill"] = int(ai_fill)
+    def bots_for(round_ai):
+        ai = copy.deepcopy(parts.ai)
+        ai.update(plan.get("ai") or {})
+        ai.update(round_ai or {})
+        if ai_fill is not None:
+            ai["aiFill"] = int(ai_fill)
+        return ai
 
-    events = []          # (level_doc, camera_bytes, event_doc, vehicles_doc)
+    events = []          # (level_doc, camera_bytes, event_doc, vehicles_doc, ai)
     for rnd in rounds:
         level = parts.level(rnd["track"]) or build_level(rnd["track"],
                                                          rnd.get("track_guid"))
         camera, _source = resolve_camera(rnd, parts, default_camera)
         vehicles = build_vehicles(parts.vehicles, rnd.get("vehicle_guid"))
         drafting = rnd.get("drafting") or heat_drafting
+        # Bot strength can differ per car, so it is resolved per round too.
+        bots = bots_for(rnd.get("ai"))
         for quali in (True, False):
             events.append((
                 level,
@@ -294,6 +299,7 @@ def build_session(plan, parts, out_path, ai_fill=None):
                             race_points=race_points,
                             drafting=drafting),
                 vehicles,
+                bots,
             ))
 
     tmp = out_path + ".tmp"
@@ -301,7 +307,7 @@ def build_session(plan, parts, out_path, ai_fill=None):
         zf.writestr("levels.json",
                     json.dumps(build_levels_index([e[0] for e in events]),
                                indent=1, ensure_ascii=False))
-        for index, (level, camera, event, vehicles) in enumerate(events, 1):
+        for index, (level, camera, event, vehicles, ai) in enumerate(events, 1):
             prefix = f"{index:03d}"
             zf.writestr(f"{prefix}-level.json",
                         json.dumps(level, indent=1, ensure_ascii=False))

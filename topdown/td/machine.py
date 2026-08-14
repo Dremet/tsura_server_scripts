@@ -96,6 +96,9 @@ class HeatMachine:
         # Set while waiting for the server to cycle into the new session we
         # asked for, so our own session end is not mistaken for the heat's.
         self.awaiting_session = False
+        # The next heat is built and waiting for the session the server starts
+        # on its own after a heat ends (see _end_heat).
+        self.pending_session = False
         self.vote = None
         self.bot_fill = int(_cfg(self.config, "bot_fill"))
         self.pending_bot_fill = None         # applied at the next event (C3)
@@ -174,11 +177,24 @@ class HeatMachine:
             if now >= self.deadline:
                 cmds += self._start_heat(now)
         elif self.state == COOLDOWN and now >= self.deadline:
-            if self.human_count:
-                cmds += self._start_heat(now)
-            else:
+            if not self.human_count:
                 self.state = IDLE
                 self.deadline = None
+            elif self.pending_session:
+                # The heat is built but the server never started a session for
+                # it. Ask for one after all -- with the plan we already have, so
+                # the heat keeps its number and its tracks.
+                self.log(f"heat {self.heat_id} still has no session -- asking "
+                         f"for one")
+                self.pending_session = False
+                self.state = HEAT
+                self.deadline = None
+                self.awaiting_session = True
+                self.session_requested_at = now
+                self.session_retries = 0
+                cmds += ["/abortsession Yes", "/continue"]
+            else:
+                cmds += self._start_heat(now)
         # If the session we asked for never materialised, nudge the server again
         # rather than sitting in a half-started heat forever.
         if self.state == HEAT and self.awaiting_session and \
@@ -209,6 +225,18 @@ class HeatMachine:
             self.awaiting_session = False
             self.events_done = 0
             self.log(f"heat {self.heat_id} session is live")
+        elif self.state == COOLDOWN and self.pending_session:
+            # The server cycled into a new session on its own and picked up the
+            # plan written at the end of the last heat. That session IS the next
+            # heat -- aborting it just to start our own would restart it for
+            # everyone for no gain.
+            self.pending_session = False
+            self.awaiting_session = False
+            self.state = HEAT
+            self.deadline = None
+            self.events_done = 0
+            self.starters = set(self.humans)
+            self.log(f"heat {self.heat_id} took over the server's own session")
         return []
 
     def on_session_ended(self, now):
@@ -366,24 +394,41 @@ class HeatMachine:
         self.state = IDLE
         self.deadline = None
         self.vote = None
+        # A heat built for the server's next session has nobody to run for.
+        self.pending_session = False
         return []
 
-    def _start_heat(self, now):
+    def _compose_heat(self):
+        """Build the next heat and adopt it, without touching the server.
+
+        Writing the plan is what matters: run_session_init.py reads it the
+        moment a session starts, so whoever starts that session -- us or the
+        server on its own -- gets this heat.
+        """
         self.plan = self._build_plan()
         rounds = self.plan.get("rounds", [])
         if not rounds:
-            self.log("no tracks configured -- cannot start a heat")
-            self.state = IDLE
-            return [f"/broadcast {BADGE} No tracks configured -- please tell an admin."]
-
+            return False
         self.heat_id = self.plan.get("heat_id")
-        self.state = HEAT
         self.events_done = 0
         self.events_total = len(rounds) * 2      # quali + race per track
         self.starters = set(self.humans)
         self.abandoned = False
         self.vote = None
+        return True
+
+    def _heat_names(self):
+        return ", ".join(r["track"] for r in (self.plan or {}).get("rounds", []))
+
+    def _start_heat(self, now):
+        if not self._compose_heat():
+            self.log("no tracks configured -- cannot start a heat")
+            self.state = IDLE
+            return [f"/broadcast {BADGE} No tracks configured -- please tell an admin."]
+
+        self.state = HEAT
         self.deadline = None
+        self.pending_session = False
         self.awaiting_session = True
         self.session_requested_at = now
         self.session_retries = 0
@@ -393,7 +438,7 @@ class HeatMachine:
         # set during session init, so run_session_init.py applies them there.
         # "/abortsession" ends a running session, "/continue" starts the next one
         # -- an idle server needs the second, a busy one needs both.
-        names = ", ".join(r["track"] for r in rounds)
+        names = self._heat_names()
         self.log(f"heat {self.heat_id} requested: {names}")
         return [
             f"/broadcast {BADGE} Heat #{self.heat_id} coming up -- "
@@ -417,6 +462,21 @@ class HeatMachine:
         if not self.human_count:
             self.state = IDLE
             self.deadline = None
+            return cmds
+
+        # About half a minute from now the server ends the finished session and
+        # starts a fresh one entirely by itself -- it does not wait for us. If
+        # the next heat is not on disk by then, that session replays the heat
+        # that just finished and we have to tear it down again, which is what
+        # players saw as a session restart (plus an admin list being cleared and
+        # refilled). So build the next heat NOW and let the server's own session
+        # be it. The cooldown stays as the fallback for a server that does not
+        # cycle on its own.
+        if self._compose_heat():
+            self.pending_session = True
+            self.log(f"heat {self.heat_id} prepared: {self._heat_names()}")
+            cmds.append(f"/broadcast {BADGE} Heat #{self.heat_id} coming up -- "
+                        f"{GREY}{self._heat_names()}</color>")
         return cmds
 
     def _restart_heat(self, now):

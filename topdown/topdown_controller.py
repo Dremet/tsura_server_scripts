@@ -170,18 +170,34 @@ def load_config():
     return cfg
 
 
-def resolve_drafting(config, vehicle):
-    """Drafting settings for `vehicle`: the shared block plus its own overrides.
+def _per_vehicle(config, shared_key, by_vehicle_key, vehicle):
+    """The shared block for `vehicle`, with that car's own overrides applied.
 
-    The tow is a property of the car, not of the track: McVizn wants 18% for the
-    VoZzer but only 14% for the McTopper (2026-08-11). Keys are matched against
-    the car's name exactly as the config spells it, case-insensitively.
+    Names are matched exactly as the config spells them, case-insensitively.
     """
-    drafting = dict(config.get("drafting") or {})
-    for name, overrides in (config.get("drafting_by_vehicle") or {}).items():
+    values = dict(config.get(shared_key) or {})
+    for name, overrides in (config.get(by_vehicle_key) or {}).items():
         if str(name).lower() == str(vehicle or "").lower():
-            drafting.update(overrides or {})
-    return drafting
+            values.update(overrides or {})
+    return values
+
+
+def resolve_drafting(config, vehicle):
+    """Drafting settings for `vehicle`.
+
+    The tow is a property of the car, not of the track: the VoZzer and the
+    McTopper each get their own number (McVizn, 2026-08-11).
+    """
+    return _per_vehicle(config, "drafting", "drafting_by_vehicle", vehicle)
+
+
+def resolve_ai(config, vehicle):
+    """Bot settings for `vehicle`.
+
+    Bots are quicker in one car than in another, so the strength belongs to the
+    car as well: André asked for Medium High in the VoZzer only (2026-08-14).
+    """
+    return _per_vehicle(config, "ai", "ai_by_vehicle", vehicle)
 
 
 def _read_json(path, fallback):
@@ -236,10 +252,12 @@ class Controller:
         plan["quali_points"] = self.config.get("quali", {}).get("points", [1])
         plan["race_points"] = self.config.get("race", {}).get("points",
                                                               [10, 6, 4, 3, 2, 1])
-        # Per round, because the car changes between races and the tow is a
-        # property of the car. The heat-wide value stays for the fallback path.
+        # Per round, because the car changes between races and both the tow and
+        # the bots' pace belong to the car. The heat-wide values stay for the
+        # fallback path that runs without a session archive.
         for rnd in plan.get("rounds") or []:
             rnd["drafting"] = resolve_drafting(self.config, rnd.get("vehicle"))
+            rnd["ai"] = resolve_ai(self.config, rnd.get("vehicle"))
         plan["drafting"] = resolve_drafting(self.config, plan.get("vehicle"))
         plan["default_camera_settings"] = self.config.get(
             "default_camera_settings", {})

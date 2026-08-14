@@ -241,6 +241,19 @@ class TestCarPool(BuilderHarness):
         zf = self.build()
         self.assertEqual(self.doc(zf, "001-vehicles.json"), self.parts.vehicles)
 
+    def test_bot_strength_follows_the_car(self):
+        plan = self.plan_with_cars()
+        plan["ai"] = {"aiSkill": 3}
+        plan["rounds"][0]["ai"] = {"aiSkill": 4}      # quicker in the VoZzer
+        plan["rounds"][1]["ai"] = {"aiSkill": 3}
+        zf = self.build(plan, ai_fill=8)
+        self.assertEqual(self.doc(zf, "001-ai.json")["aiSkill"], 4)
+        self.assertEqual(self.doc(zf, "002-ai.json")["aiSkill"], 4)
+        self.assertEqual(self.doc(zf, "003-ai.json")["aiSkill"], 3)
+        # Grid size and the export's other values are untouched by this.
+        self.assertEqual(self.doc(zf, "001-ai.json")["aiFill"], 8)
+        self.assertEqual(self.doc(zf, "001-ai.json")["aiClanTag"], "BOT")
+
     def test_drafting_follows_the_car_not_the_heat(self):
         plan = self.plan_with_cars()
         plan["drafting"] = {"draftingSpeedEffect": 18}
