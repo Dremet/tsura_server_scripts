@@ -222,13 +222,17 @@ N_TRAILING = 5  # unknown empty section masks before the 0x0139 end marker
 # (both seen in files written by the same game version, e.g. 108):
 #   "A": bit4 = complexLocking (b), bit5 = lockedBrakeMultiplier (f)
 #   "B": bit4 = lockedBrakeMultiplier (f), bit5 = complexLocking (b)
-# Corpus check 2026-08-28 (235 vehicles, game versions 91..108): layout A
-# is used exactly when complexLocking is True (byte 01); layout B exactly
-# when complexLocking is off (bit never set). Nothing in the header tells
-# them apart, so parse() tries A then B and keeps whichever parses cleanly
-# to the end marker (d["layout"] records the result). write() picks the
-# layout from complexLocking with the same rule -> round trips are
-# byte-identical for the whole corpus.
+# Corpus check 2026-08-28 (235 vehicles, game versions 91..108): in layout A
+# the bool byte is always 01; in layout B bit5 is never set. The game shows
+# complexLocking = ON for a layout-B file (Mazda_MX-5_RWD.veh, verified in
+# the editor by André 2026-08-28), so in B "bit4 set" means complexLocking
+# is on and its payload is lockedBrakeMultiplier. parse() therefore reports
+# complexLocking=True for both layouts and records the layout in
+# d["layout"]; write() reuses that layout (default A) so round trips are
+# byte-identical for the whole corpus. In B an explicit complexLocking
+# value is never written; the field is on iff lockedBrakeMultiplier is set.
+# How the game encodes complexLocking=OFF is still unverified (candidates:
+# bit4 clear, as in 3 corpus files with neither bit4 nor bit5).
 _BRAKING_A = dict(PHYS_SECTIONS)["braking"]
 _BRAKING_B = [("braking", "f"), ("parkBraking", "f"), ("parkSpeed", "f"),
               ("lockingStartTime", "f"), ("lockedBrakeMultiplier", "f"),
@@ -236,11 +240,6 @@ _BRAKING_B = [("braking", "f"), ("parkBraking", "f"), ("parkSpeed", "f"),
               ("lockedGripMultiplier", "f")]
 LAYOUTS = {"A": _BRAKING_A, "B": _BRAKING_B}
 DEFAULT_LAYOUT = "A"
-
-
-def layout_for(phys: dict) -> str:
-    """Braking layout the game would write for these physics values."""
-    return "A" if phys.get("braking", {}).get("complexLocking") else "B"
 
 
 def phys_sections(layout: str = DEFAULT_LAYOUT):
@@ -593,6 +592,8 @@ def _parse(data: bytes, layout: str) -> dict:
         phys[name] = r.section(spec)
     d["physics"] = phys
     d["layout"] = layout
+    if layout == "B" and "lockedBrakeMultiplier" in phys["braking"]:
+        phys["braking"]["complexLocking"] = True
 
     trailing = r.take(N_TRAILING)
     if trailing != b"\x00" * N_TRAILING:
@@ -694,12 +695,12 @@ def write(d: dict) -> bytes:
     w.u16(PHYS_ID)
     w.u16(PHYS_VERSION)
     phys = d.get("physics", {})
-    layout = layout_for(phys)
+    layout = d.get("layout", DEFAULT_LAYOUT)
     for name, spec in phys_sections(layout):
         vals = phys.get(name, {})
         if name == "braking" and layout == "B":
-            # complexLocking off is encoded by the layout itself; an explicit
-            # False byte would be misread as layout A by the game/parser.
+            # in B the bit-4 float itself means "complexLocking on"; never
+            # write an explicit bool byte (would be misread as layout A)
             vals = {k: v for k, v in vals.items() if k != "complexLocking"}
         w.section(spec, vals)
     w.raw(b"\x00" * N_TRAILING)
