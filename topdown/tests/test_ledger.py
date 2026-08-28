@@ -297,6 +297,69 @@ class TestStatusTransitions(LedgerCase):
         self.assertEqual((rec["round"], rec["phase"]), (1, "race"))
 
 
+class TestPollDebounce(LedgerCase):
+    """A poll that found nothing new is not worth a line.
+
+    Found in production on 2026-08-28: the controller prepares the next heat the
+    moment one ends and then waits for players, so heat 86 sat open on an empty
+    server and appended an identical `racers: []` line every 30 s -- 73 of them
+    in 37 minutes, with no end in sight.
+    """
+
+    def polls(self):
+        return [r for r in self.records()
+                if r["t"] == ledger_mod.ROSTER and r.get("reason") == "poll"]
+
+    def test_an_unchanged_poll_is_not_written_again(self):
+        for _ in range(5):
+            self.ctl.ledger.roster({}, {}, reason="poll")
+        self.assertEqual(len(self.polls()), 1)
+
+    def test_a_change_is_written(self):
+        self.ctl.ledger.roster({}, {}, reason="poll")
+        self.ctl.ledger.roster({MCVIZN: "[VSR] McVizn"}, {}, reason="poll")
+        self.ctl.ledger.roster({MCVIZN: "[VSR] McVizn"}, {}, reason="poll")
+        self.ctl.ledger.roster({}, {}, reason="poll")
+        self.assertEqual([[p["steam_id"] for p in r["racers"]] for r in self.polls()],
+                         [[], [MCVIZN], []])
+
+    def test_a_spectator_moving_counts_as_a_change(self):
+        """Same people on the server, but a different answer to "who raced?"."""
+        self.ctl.ledger.roster({MCVIZN: "M"}, {}, reason="poll")
+        self.ctl.ledger.roster({}, {MCVIZN: "M"}, reason="poll")
+        self.assertEqual(len(self.polls()), 2)
+
+    def test_the_grid_snapshots_are_never_dropped(self):
+        """event_init/event_start decide participation -- §4, and OE-5."""
+        self.ctl.ledger.roster({}, {}, reason="poll")
+        self.ctl.ledger.roster({}, {}, reason="event_init")
+        self.ctl.ledger.roster({}, {}, reason="event_start")
+        reasons = [r.get("reason") for r in self.records()
+                   if r["t"] == ledger_mod.ROSTER]
+        self.assertEqual(reasons[-3:], ["poll", "event_init", "event_start"])
+
+    def test_a_new_round_is_a_change_even_with_the_same_players(self):
+        self.ctl.ledger.init_event(1, "race")
+        self.ctl.ledger.roster({MCVIZN: "M"}, {}, reason="poll")
+        self.ctl.ledger.init_event(2, "race")
+        self.ctl.ledger.roster({MCVIZN: "M"}, {}, reason="poll")
+        self.assertEqual([(r["round"], r["phase"]) for r in self.polls()],
+                         [(1, "race"), (2, "race")])
+
+    def test_a_new_heat_starts_over(self):
+        """The next heat's first poll must land, even if it looks identical."""
+        self.ctl.ledger.roster({}, {}, reason="poll")
+        self.ctl.ledger.end_heat()
+        self.ctl.ledger.start_heat(81, 2, uid="20260828T120000-81")
+        self.ctl.ledger.roster({}, {}, reason="poll")
+        with open(os.path.join(self.tmp, "20260828T120000-81.jsonl"),
+                  encoding="utf-8") as fh:
+            second = [json.loads(line) for line in fh if line.strip()]
+        self.assertEqual(
+            len([r for r in second
+                 if r["t"] == ledger_mod.ROSTER and r.get("reason") == "poll"]), 1)
+
+
 class TestJournalShape(LedgerCase):
     def test_every_record_carries_its_heat(self):
         feed(self.ctl, ["#EventInit", "[SR] Frozeni retired."])

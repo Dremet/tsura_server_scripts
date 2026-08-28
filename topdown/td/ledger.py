@@ -78,6 +78,7 @@ class Ledger:
         self.phase = None
         self.path = None
         self._broken = False
+        self._last_roster = None
 
     # --- writing ----------------------------------------------------------
 
@@ -111,6 +112,9 @@ class Ledger:
         self.round = None
         self.phase = None
         self._broken = False
+        # A new heat is a new file: the previous heat's last roster must not
+        # suppress the first poll of this one.
+        self._last_roster = None
         self.path = os.path.join(self.directory, f"{self.heat_uid}.jsonl")
         self._write(HEAT_START, rounds_total=rounds_total, format=FORMAT_VERSION)
         return self.heat_uid
@@ -143,14 +147,28 @@ class Ledger:
         `racers` and `spectators` are {steam_id: name}. Taken on every "/who /id"
         reply, and deliberately again the moment an event is armed and started --
         those two snapshots are what decides who counts as a participant.
+
+        A poll that found nothing new is not written. The controller polls every
+        30 s and prepares the next heat the moment one ends, so a heat nobody
+        joins stays open and would otherwise append an identical line twice a
+        minute for as long as the server sits empty. Only `reason="poll"` is
+        dropped this way: the event_init/event_start snapshots are the grid
+        basis and must be in the journal even when they repeat the last poll.
         """
+        racer_rows = [{"steam_id": sid, "name": name}
+                      for sid, name in sorted(racers.items())]
+        spectator_rows = [{"steam_id": sid, "name": name}
+                          for sid, name in sorted(spectators.items())]
+        signature = (tuple(sorted(racers)), tuple(sorted(spectators)),
+                     self.round, self.phase)
+        if reason == "poll" and signature == self._last_roster:
+            return
+        self._last_roster = signature
         self._write(
             ROSTER,
             reason=reason,
-            racers=[{"steam_id": sid, "name": name}
-                    for sid, name in sorted(racers.items())],
-            spectators=[{"steam_id": sid, "name": name}
-                        for sid, name in sorted(spectators.items())],
+            racers=racer_rows,
+            spectators=spectator_rows,
         )
 
     def join(self, steam_id, name, spectator):
