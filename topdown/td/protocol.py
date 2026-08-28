@@ -26,7 +26,11 @@ JOIN = "join"
 LEAVE = "leave"
 CHAT = "chat"
 WHO_HEADER = "who_header"
+SPECTATOR_HEADER = "spectator_header"
 WHO_ENTRY = "who_entry"
+SPECTATE = "spectate"
+UNSPECTATE = "unspectate"
+RETIRED = "retired"
 EVENT_UPCOMING = "event_upcoming"
 EVENT_STARTED = "event_started"
 EVENT_ENDED = "event_ended"
@@ -41,10 +45,22 @@ _COLOUR = re.compile(r"</?(?:color|mspace|noparse|pos|mark)(?:=[^>]*)?>")
 _JOIN = re.compile(r"^Player connected:\s*(?P<name>.+?)\s*$")
 _SPECTATOR = re.compile(r"^Spectator connected:\s*(?P<name>.+?)\s*$")
 _LEAVE = re.compile(r"^(?P<name>.+?) disconnected\.\s*$")
+# The game announces both directions of the spectator toggle. These are the only
+# unambiguous evidence that a driver gave up a race they had started, so the
+# stats ledger leans on them rather than on the 30s roster poll.
+_SPECTATE = re.compile(r"^(?P<name>.+?) is now a spectator\.\s*$")
+_UNSPECTATE = re.compile(r"^(?P<name>.+?) is no longer a spectator\.\s*$")
+_RETIRED = re.compile(r"^(?P<name>.+?) retired\.\s*$")
 # Chat on the script port is "**<name>** text"; the log file writes "<name> text".
 _CHAT = re.compile(r"^(?:\*\*)?<(?P<name>.+?)>(?:\*\*)?\s?(?P<text>.*)$")
 _WHO_HEADER = re.compile(r"^Players \((?P<count>\d+)\):\s*$")
+# A "/who /id" reply lists racers first and, only when there are any, appends a
+# second block of spectators. There is no "Spectators (0):" line.
+_SPECTATOR_HEADER = re.compile(r"^Spectators \((?P<count>\d+)\):\s*$")
 _WHO_ENTRY = re.compile(r"^\s*-\s*(?P<name>.+?)\s*\((?P<steam_id>\d{5,})\)\s*$")
+# Entries in the spectator block carry this prefix; it is part of the name as
+# the line arrives, so it has to come off before the name means anything.
+_SPECTATOR_MARK = re.compile(r"^\(Spectator\)\s*")
 _UPCOMING = re.compile(
     r"^Event (?P<index>\d+) / (?P<total>\d+) is about to start in (?P<track>.+?)\.\s*$"
 )
@@ -129,12 +145,19 @@ def parse_line(line):
     if m:
         return {"kind": WHO_HEADER, "count": int(m.group("count"))}
 
+    m = _SPECTATOR_HEADER.match(line)
+    if m:
+        return {"kind": SPECTATOR_HEADER, "count": int(m.group("count"))}
+
     m = _WHO_ENTRY.match(line)
     if m:
+        raw_name = strip_tags(m.group("name"))
+        spectator = bool(_SPECTATOR_MARK.match(raw_name))
         return {
             "kind": WHO_ENTRY,
-            "name": clean_name(m.group("name")),
+            "name": clean_name(_SPECTATOR_MARK.sub("", raw_name)),
             "steam_id": int(m.group("steam_id")),
+            "spectator": spectator,
         }
 
     m = _UPCOMING.match(line)
@@ -156,6 +179,18 @@ def parse_line(line):
             "text": strip_tags(m.group("text")),
         }
 
+    m = _SPECTATE.match(line)
+    if m:
+        return {"kind": SPECTATE, "name": clean_name(m.group("name"))}
+
+    m = _UNSPECTATE.match(line)
+    if m:
+        return {"kind": UNSPECTATE, "name": clean_name(m.group("name"))}
+
+    m = _RETIRED.match(line)
+    if m:
+        return {"kind": RETIRED, "name": clean_name(m.group("name"))}
+
     m = _JOIN.match(line)
     if m:
         return {"kind": JOIN, "name": clean_name(m.group("name")), "spectator": False}
@@ -166,7 +201,13 @@ def parse_line(line):
 
     m = _LEAVE.match(line)
     if m:
-        return {"kind": LEAVE, "name": clean_name(m.group("name"))}
+        raw_name = strip_tags(m.group("name"))
+        spectator = bool(_SPECTATOR_MARK.match(raw_name))
+        return {
+            "kind": LEAVE,
+            "name": clean_name(_SPECTATOR_MARK.sub("", raw_name)),
+            "spectator": spectator,
+        }
 
     return None
 

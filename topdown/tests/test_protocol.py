@@ -151,5 +151,63 @@ class TestQuoting(unittest.TestCase):
             p.quoted("weird \"name\" with 'both'")
 
 
+class TestStatusLines(unittest.TestCase):
+    """Lines the stats ledger depends on.
+
+    All of them were taken from /home/topdown/controller.raw.log on 2026-08-25,
+    which is the first time anything looked at them: the controller wrote that
+    file for weeks without a single one being parsed.
+    """
+
+    def test_spectate(self):
+        ev = p.parse_line("[VSR] McVizn is now a spectator.")
+        self.assertEqual(ev["kind"], p.SPECTATE)
+        self.assertEqual(ev["name"], "[VSR] McVizn")
+
+    def test_unspectate(self):
+        ev = p.parse_line("[VSR] McVizn is no longer a spectator.")
+        self.assertEqual(ev["kind"], p.UNSPECTATE)
+        self.assertEqual(ev["name"], "[VSR] McVizn")
+
+    def test_retired(self):
+        ev = p.parse_line("[SR] Frozeni retired.")
+        self.assertEqual(ev["kind"], p.RETIRED)
+        self.assertEqual(ev["name"], "[SR] Frozeni")
+
+    def test_spectator_header(self):
+        ev = p.parse_line("Spectators (1):")
+        self.assertEqual(ev["kind"], p.SPECTATOR_HEADER)
+        self.assertEqual(ev["count"], 1)
+
+    def test_who_entry_in_spectator_block_is_flagged(self):
+        ev = p.parse_line(" - (Spectator) [VSR] McVizn (76561198131829686)")
+        self.assertEqual(ev["kind"], p.WHO_ENTRY)
+        self.assertTrue(ev["spectator"])
+        # The marker is part of the line, not part of the name.
+        self.assertEqual(ev["name"], "[VSR] McVizn")
+        self.assertEqual(ev["steam_id"], 76561198131829686)
+
+    def test_who_entry_in_player_block_is_not_flagged(self):
+        ev = p.parse_line(" - [VSR] McVizn (76561198131829686)")
+        self.assertFalse(ev["spectator"])
+        self.assertEqual(ev["name"], "[VSR] McVizn")
+
+    def test_spectator_disconnect_keeps_the_name_clean(self):
+        ev = p.parse_line("(Spectator) [VSR] McVizn disconnected.")
+        self.assertEqual(ev["kind"], p.LEAVE)
+        self.assertTrue(ev["spectator"])
+        self.assertEqual(ev["name"], "[VSR] McVizn")
+
+    def test_plain_disconnect_is_not_a_spectator(self):
+        ev = p.parse_line("[VSR] McVizn disconnected.")
+        self.assertEqual(ev["kind"], p.LEAVE)
+        self.assertFalse(ev["spectator"])
+
+    def test_chat_about_retiring_is_still_chat(self):
+        """A player typing the magic words must not forge a status change."""
+        ev = p.parse_line("**<[x] Whiplash>** [SR] Frozeni retired.")
+        self.assertEqual(ev["kind"], p.CHAT)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

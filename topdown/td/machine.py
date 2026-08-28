@@ -76,11 +76,16 @@ class Vote:
 class HeatMachine:
     """Drives one topdown server through an endless series of heats."""
 
-    def __init__(self, config, rng, plan_builder, clock=None, log=None):
+    def __init__(self, config, rng, plan_builder, clock=None, log=None,
+                 on_heat_end=None):
         self.config = config or {}
         self.rng = rng
         self._build_plan = plan_builder      # () -> heat plan dict
         self.log = log or (lambda msg: None)
+        # Called as on_heat_end(abandoned) the moment a heat stops running. Only
+        # the machine knows when that is, and the status ledger has to record a
+        # heat end even for a heat that was abandoned rather than completed.
+        self._on_heat_end = on_heat_end or (lambda abandoned: None)
 
         self.state = IDLE
         self.humans = {}                     # steam_id -> name, humans only
@@ -449,6 +454,9 @@ class HeatMachine:
 
     def _end_heat(self, now, abandoned):
         self.log(f"heat {self.heat_id} ended (abandoned={abandoned})")
+        # Before _compose_heat() further down can swap in the next heat and take
+        # the ledger with it.
+        self._on_heat_end(abandoned)
         self.state = COOLDOWN
         self.deadline = now + float(_cfg(self.config, "cooldown_seconds"))
         self.announced = set()

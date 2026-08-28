@@ -13,6 +13,7 @@ SCRIPTS = os.path.join(HERE, "..", "server", "config", "Scripts")
 
 PLAN = {
     "heat_id": 42,
+    "heat_uid": "20260825T210000-42",
     "vehicle": "VoZzer",
     "quali_laps": 1,
     "quali_points": [1],
@@ -198,6 +199,21 @@ class TestHeatStamp(HeatHarness):
         self.assertEqual(stamp["round"], 2)
         self.assertEqual(stamp["phase"], "quali")
         self.assertEqual(stamp["track"], "Maple Ridge v1.1")
+
+    def test_stamp_carries_the_key_the_status_journal_is_filed_under(self):
+        """Without this the results and the journal cannot be joined at all."""
+        self.event_init()
+        self.event_end()
+        self.assertEqual(self.read("topdown_heat.json")["heat_uid"],
+                         PLAN["heat_uid"])
+
+    def test_stamp_survives_a_plan_from_before_the_journal_existed(self):
+        """An in-flight heat planned by the old controller must not break."""
+        plan = {k: v for k, v in PLAN.items() if k != "heat_uid"}
+        self.write("heat_plan.json", plan)
+        self.event_init()
+        self.event_end()
+        self.assertIsNone(self.read("topdown_heat.json")["heat_uid"])
 
 
 if __name__ == "__main__":

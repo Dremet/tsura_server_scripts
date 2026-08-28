@@ -44,6 +44,10 @@ def main():
 
     stamp = {
         "heat_id": plan.get("heat_id"),
+        # The key that ties this race to the controller's status journal.
+        # heat_id alone is not unique: the counter has been reset before, so the
+        # July 2026 test heats carry ids the live counter will reach again.
+        "heat_uid": plan.get("heat_uid"),
         "round": index + 1,
         "rounds_total": len(rounds),
         "phase": progress.get("phase", "quali"),

@@ -28,6 +28,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from td import heat as heat_mod
+from td import ledger as ledger_mod
 from td import protocol
 from td import session as session_mod
 from td.machine import HeatMachine
@@ -51,6 +52,14 @@ LOG_PATH = os.path.join(HOME, "controller.log")
 # so there is no second client that could watch along.
 RAW_LOG_PATH = os.path.join(HOME, "controller.raw.log")
 RAW_LOG_MAX_BYTES = 5 * 1024 * 1024
+# Per-heat status journals for the stats pipeline. It sits beside the result
+# folders rather than inside one on purpose: run_pipeline.sh skips any directory
+# without a `raw` child, and a journal that had to be finished before
+# move_raw_files.sh ran would be a race between two unrelated processes.
+STATUS_DIR = "/home/data/topdown/status"
+# Used when the shared directory cannot be written, so a permissions mishap
+# costs us the hand-over, not the data.
+STATUS_DIR_FALLBACK = os.path.join(HOME, "status")
 
 HOST, PORT = "127.0.0.1", 7766
 RECONNECT_SECONDS = 5
@@ -59,6 +68,11 @@ WHO_TIMEOUT = 5.0
 # Re-ask for the roster this often even when nothing happened, so a missed
 # join/leave line cannot leave the controller with a stale idea of the lobby.
 WHO_INTERVAL = 30.0
+# A "/who /id" reply is one or two blocks: racers always, spectators only when
+# there are any (the server never sends "Spectators (0):"). Nothing marks the
+# end, so after the racers are in we wait this long for a spectator block to
+# follow before calling the reply complete.
+WHO_SETTLE = 0.4
 
 DEFAULT_CONFIG = {
     # The car pool: one of these is drawn per race (André, 2026-08-11). Both
@@ -231,13 +245,22 @@ class Controller:
         self.config = load_config()
         self.sock = None
         self.buffer = b""
+        self.ledger = ledger_mod.Ledger(self.status_dir(), log=log)
         self.machine = HeatMachine(
-            self.config, random.Random(), self.build_plan, log=log
+            self.config, random.Random(), self.build_plan, log=log,
+            on_heat_end=self.on_heat_end,
         )
         self.who_expect = None
         self.who_buffer = {}
+        self.spectator_expect = None
+        self.spectator_buffer = {}
+        self.who_settle_at = 0.0
         self.who_asked_at = 0.0
         self.last_who = 0.0
+        self.who_reason = None
+        # Last known spectator roster, so a transition can be attributed to a
+        # steam id even when the line that reports it carries only a name.
+        self.spectators = {}
 
     # --- plan ------------------------------------------------------------
 
@@ -249,6 +272,15 @@ class Controller:
         plan = heat_mod.build_heat_plan(self.config, random.Random(), ai_pairs)
         plan["heat_id"] = next_heat_id()
         plan["started_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+        # Opens this heat's status journal and produces the key that ties it to
+        # the result files. heat_id alone would not do: the counter in
+        # topdown_state.json has been reset before, so the ids of the July test
+        # heats are ones the live counter will hand out again.
+        # A heat cut short by an admin or a vote never reaches _end_heat, so its
+        # journal is closed here rather than left hanging.
+        self.ledger.end_heat(reason="superseded")
+        plan["heat_uid"] = self.ledger.start_heat(
+            plan["heat_id"], len(plan.get("rounds") or []))
         plan["quali_points"] = self.config.get("quali", {}).get("points", [1])
         plan["race_points"] = self.config.get("race", {}).get("points",
                                                               [10, 6, 4, 3, 2, 1])
@@ -351,22 +383,71 @@ class Controller:
 
     # --- roster ----------------------------------------------------------
 
-    def ask_who(self, now):
+    def status_dir(self):
+        """Where the status journals go, preferring the shared handover point."""
+        if self.dry_run:
+            # A rehearsal must not leave records the pipeline would then load.
+            return os.path.join(HOME, "status-dryrun")
+        try:
+            os.makedirs(STATUS_DIR, exist_ok=True)
+            if os.access(STATUS_DIR, os.W_OK):
+                return STATUS_DIR
+        except OSError:
+            pass
+        return STATUS_DIR_FALLBACK
+
+    def ask_who(self, now, reason=None):
         """Ask the server who is on. Names alone never establish identity."""
         self.who_asked_at = now
+        self.who_settle_at = 0.0
         self.last_who = now
+        self.who_reason = reason
         self.send(["/who /id"])
 
     def handle_who_entry(self, event, now):
-        self.who_buffer[event["steam_id"]] = event["name"]
-        if self.who_expect is not None and len(self.who_buffer) >= self.who_expect:
-            self.finish_who(now)
+        if event.get("spectator"):
+            self.spectator_buffer[event["steam_id"]] = event["name"]
+        else:
+            self.who_buffer[event["steam_id"]] = event["name"]
+        self.check_who_complete(now)
+
+    def check_who_complete(self, now):
+        """Close the reply once both blocks have arrived, or start the wait.
+
+        The racer count is announced up front, the spectator count only if a
+        spectator block follows at all. So a complete racer list means either
+        "done" or "done unless a spectator block is on its way" -- and the only
+        way to tell the two apart is to wait a moment.
+        """
+        racers_in = (self.who_expect is not None
+                     and len(self.who_buffer) >= self.who_expect)
+        if not racers_in:
+            return
+        if self.spectator_expect is not None:
+            # The question the timer was there to answer has been answered, and
+            # letting it run on would close the reply before the spectators are
+            # in -- which is how a spectator ends up looking like a participant.
+            self.who_settle_at = 0.0
+            if len(self.spectator_buffer) >= self.spectator_expect:
+                self.finish_who(now)
+            return
+        if not self.who_settle_at:
+            self.who_settle_at = now + WHO_SETTLE
 
     def finish_who(self, now):
-        roster, self.who_buffer = dict(self.who_buffer), {}
+        racers, self.who_buffer = dict(self.who_buffer), {}
+        spectators, self.spectator_buffer = dict(self.spectator_buffer), {}
+        reason, self.who_reason = self.who_reason, None
         self.who_expect = None
+        self.spectator_expect = None
+        self.who_settle_at = 0.0
         self.who_asked_at = 0.0
-        self.send(self.machine.set_players(roster, now))
+        self.spectators = spectators
+        # The machine only ever sees racers: a spectator must not start a
+        # countdown or keep an otherwise empty lobby alive. Spectators matter to
+        # the statistics, not to the matchmaking.
+        self.ledger.roster(racers, spectators, reason=reason)
+        self.send(self.machine.set_players(racers, now))
 
     # --- main loop -------------------------------------------------------
 
@@ -378,37 +459,114 @@ class Controller:
         kind = event["kind"]
 
         if kind == protocol.WHO_HEADER:
+            # A new reply always starts here, so both buffers reset together.
             self.who_expect = event["count"]
             self.who_buffer = {}
-            if event["count"] == 0:
-                self.finish_who(now)
+            self.spectator_expect = None
+            self.spectator_buffer = {}
+            self.who_settle_at = 0.0
+            self.check_who_complete(now)
+        elif kind == protocol.SPECTATOR_HEADER:
+            self.spectator_expect = event["count"]
+            self.check_who_complete(now)
         elif kind == protocol.WHO_ENTRY:
             self.handle_who_entry(event, now)
         elif kind in (protocol.JOIN, protocol.LEAVE):
             log(f"<- {line.strip()}")
-            self.ask_who(now)
+            self.record_presence(event)
+            self.ask_who(now, reason=kind)
+        elif kind in (protocol.SPECTATE, protocol.UNSPECTATE, protocol.RETIRED):
+            log(f"<- {line.strip()}")
+            self.record_status_change(kind, event["name"])
+            # These three decide whether a race counts, so the roster behind them
+            # must not be 30 seconds old.
+            self.ask_who(now, reason=kind)
         elif kind == protocol.CHAT:
             steam_id = self.steam_id_for(event["name"])
             self.send(self.machine.on_chat(steam_id, event["name"],
                                            event["text"], now))
+        elif kind == protocol.EVENT_STARTED:
+            log("<- event started")
+            self.ledger.start_event()
+            # The grid is locked in at this point: whoever is a racer now is a
+            # participant, and whoever is spectating now is not.
+            self.ask_who(now, reason="event_start")
         elif kind == protocol.EVENT_ENDED:
             log("<- event ended")
+            self.ledger.end_event()
             self.send(self.machine.on_event_ended(now))
-            self.ask_who(now)
+            self.ask_who(now, reason="event_end")
         elif kind == protocol.SESSION_STARTED:
             log("<- session init")
             self.send(self.machine.on_session_started(now))
-            self.ask_who(now)
+            self.ask_who(now, reason="session_start")
         elif kind == protocol.SESSION_ENDED:
             log("<- session end")
             self.send(self.machine.on_session_ended(now))
-        elif kind == protocol.EVENT_UPCOMING and event.get("track"):
-            log(f"<- event {event['index']}/{event['total']} at {event['track']}")
+        elif kind == protocol.EVENT_UPCOMING:
+            if event.get("track"):
+                # The prose line, which arrives first and names the track.
+                log(f"<- event {event['index']}/{event['total']} at {event['track']}")
+            else:
+                # The "#EventInit" marker. Both forms mean the same event, so
+                # only one of them may open a journal entry.
+                self.begin_ledger_event()
+                self.ask_who(now, reason="event_init")
+
+    # --- status ledger ----------------------------------------------------
+
+    def begin_ledger_event(self):
+        """Open the next journal entry, on the same cursor the result stamp uses.
+
+        Every round is a qualifying followed by a race, so the count of finished
+        events is the cursor: run_event_init.py derives the round and phase in
+        heat_progress.json exactly this way. Deriving it here instead of reading
+        that file keeps the two from disagreeing when the hook happens to run a
+        moment after the marker reaches us -- and round/phase is the key the
+        pipeline joins the journal to the result files on.
+        """
+        done = int(self.machine.events_done)
+        index, phase = divmod(done, 2)
+        rounds = (self.machine.plan or {}).get("rounds") or []
+        rnd = rounds[index] if 0 <= index < len(rounds) else {}
+        phase = "race" if phase else "quali"
+        self.ledger.init_event(
+            round_no=index + 1,
+            phase=phase,
+            track=rnd.get("track"),
+            track_guid=rnd.get("track_guid"),
+            vehicle=rnd.get("vehicle"),
+            vehicle_guid=rnd.get("vehicle_guid"),
+            laps=rnd.get("laps"),
+        )
+
+    def record_presence(self, event):
+        name = event["name"]
+        steam_id = self.steam_id_for(name)
+        if event["kind"] == protocol.JOIN:
+            self.ledger.join(steam_id, name, event.get("spectator", False))
+        else:
+            self.ledger.leave(steam_id, name, event.get("spectator", False))
+
+    def record_status_change(self, kind, name):
+        steam_id = self.steam_id_for(name)
+        if kind == protocol.SPECTATE:
+            self.ledger.spectate(steam_id, name)
+        elif kind == protocol.UNSPECTATE:
+            self.ledger.unspectate(steam_id, name)
+        else:
+            self.ledger.retired(steam_id, name)
+
+    def on_heat_end(self, abandoned):
+        self.ledger.end_heat(reason="abandoned" if abandoned else "finished")
 
     def steam_id_for(self, name):
-        for steam_id, known in self.machine.humans.items():
-            if known == name:
-                return steam_id
+        # Spectators are kept out of the machine's roster, but a "is no longer a
+        # spectator" line is exactly the case where the name belongs to one.
+        for roster in (self.machine.humans, self.spectators):
+            for steam_id, known in roster.items():
+                if known == name:
+                    return steam_id
         return None
 
     def run(self, once=False):
@@ -432,15 +590,20 @@ class Controller:
             now = time.time()
             self.send(self.machine.tick(now))
 
+            # The racer block is in and no spectator block followed in time, so
+            # there is none: the reply is complete.
+            if self.who_settle_at and now >= self.who_settle_at:
+                self.finish_who(now)
             # A "/who /id" reply that never arrived must not wedge the roster.
-            if self.who_asked_at and now - self.who_asked_at > WHO_TIMEOUT:
-                if self.who_buffer or self.who_expect == 0:
+            elif self.who_asked_at and now - self.who_asked_at > WHO_TIMEOUT:
+                if self.who_buffer or self.spectator_buffer or self.who_expect == 0:
                     self.finish_who(now)
                 else:
                     self.who_expect = None
+                    self.spectator_expect = None
                     self.who_asked_at = 0.0
             elif now - self.last_who > WHO_INTERVAL:
-                self.ask_who(now)
+                self.ask_who(now, reason="poll")
 
             if once:
                 return 0
