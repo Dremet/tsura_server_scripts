@@ -72,12 +72,15 @@ Physics block:
     braking:        [braking f, parkBraking f, parkSpeed f, lockingStartTime f,
                      complexLocking b, lockedBrakeMultiplier f,
                      cooldownMultiplier u8, lockedGripMultiplier f]
+                    -- layout "A"; layout "B" swaps bits 4/5 (see LAYOUTS).
+                       The game writes both (e.g. Mazda_MX-5_RWD.veh, 2026-08,
+                       game version 108, is "B"). Detected by trial parse.
     steering:       [grip f, maxSteering f, changeSpeed f, changeReturnSpeed f,
                      neutralReturn f, changeReturnSpeedCounterSteering f,
                      changeReturnSpeedOnNeutral f, flyingSteering f]
     steering2:      [fullSteeringSpeed f, ...]
     oversteering:   [always f, sliding f, braking f, accelerating f]
-    sliding:        [slidingAngle f, gradualRange f, gradualGrip b,
+    sliding:        [slidingAngle f, gradualRange f, gradualGrip mb,
                      slideBraking f, slideDeceleration f, slideAcceleration f,
                      minSmokeAngle u8, minSmokeRange u8]
     spring:         [maxLength f, maxAcceleration f, damping f, backLength f,
@@ -182,7 +185,7 @@ PHYS_SECTIONS = [
     ("braking", [("braking", "f"), ("parkBraking", "f"), ("parkSpeed", "f"),
                  ("lockingStartTime", "f"), ("complexLocking", "b"),
                  ("lockedBrakeMultiplier", "f"), ("cooldownMultiplier", "u8"),
-                 ("lockedGripMultiplier", "f")]),
+                 ("lockedGripMultiplier", "f")]),  # layout "A" (see LAYOUTS)
     # confirmed via editor: bit5..7 = Flying Steering, Flying Change Mult,
     # Neutral Return; bit4 not shown in editor (deprecated field)
     ("steering", [("grip", "f"), ("maxSteering", "f"), ("changeSpeed", "f"),
@@ -195,7 +198,7 @@ PHYS_SECTIONS = [
     ("oversteering", [("always", "f"), ("sliding", "f"), ("braking", "f"),
                       ("accelerating", "f")]),
     ("sliding", [("slidingAngle", "f"), ("gradualRange", "f"),
-                 ("gradualGrip", "b"), ("slideBraking", "f"),
+                 ("gradualGrip", "mb"), ("slideBraking", "f"),
                  ("slideDeceleration", "f"), ("slideAcceleration", "f"),
                  ("minSmokeAngle", "u8"), ("minSmokeRange", "u8")]),
     ("spring", [("maxLength", "f"), ("maxAcceleration", "f"), ("damping", "f"),
@@ -214,6 +217,36 @@ PHYS_SECTIONS = [
 ]
 
 N_TRAILING = 5  # unknown empty section masks before the 0x0139 end marker
+
+# Braking-section layouts. The game writes two variants of the braking chunk
+# (both seen in files written by the same game version, e.g. 108):
+#   "A": bit4 = complexLocking (b), bit5 = lockedBrakeMultiplier (f)
+#   "B": bit4 = lockedBrakeMultiplier (f), bit5 = complexLocking (b)
+# Corpus check 2026-08-28 (235 vehicles, game versions 91..108): layout A
+# is used exactly when complexLocking is True (byte 01); layout B exactly
+# when complexLocking is off (bit never set). Nothing in the header tells
+# them apart, so parse() tries A then B and keeps whichever parses cleanly
+# to the end marker (d["layout"] records the result). write() picks the
+# layout from complexLocking with the same rule -> round trips are
+# byte-identical for the whole corpus.
+_BRAKING_A = dict(PHYS_SECTIONS)["braking"]
+_BRAKING_B = [("braking", "f"), ("parkBraking", "f"), ("parkSpeed", "f"),
+              ("lockingStartTime", "f"), ("lockedBrakeMultiplier", "f"),
+              ("complexLocking", "b"), ("cooldownMultiplier", "u8"),
+              ("lockedGripMultiplier", "f")]
+LAYOUTS = {"A": _BRAKING_A, "B": _BRAKING_B}
+DEFAULT_LAYOUT = "A"
+
+
+def layout_for(phys: dict) -> str:
+    """Braking layout the game would write for these physics values."""
+    return "A" if phys.get("braking", {}).get("complexLocking") else "B"
+
+
+def phys_sections(layout: str = DEFAULT_LAYOUT):
+    """PHYS_SECTIONS with the braking chunk of the given layout."""
+    brk = LAYOUTS[layout]
+    return [(n, brk if n == "braking" else spec) for n, spec in PHYS_SECTIONS]
 
 # Min/Max limits from the game's IL2CPP metadata constants (Min*/Max* fields).
 # Only fields with known limits are listed; (min, max), None = unbounded side.
@@ -489,7 +522,20 @@ class Reader:
         return out
 
 
-def parse(data: bytes) -> dict:
+def parse(data: bytes, layout: str | None = None) -> dict:
+    """Parse properties.bin. Tries braking layouts A then B unless given."""
+    if layout is not None:
+        return _parse(data, layout)
+    errors = []
+    for lay in LAYOUTS:
+        try:
+            return _parse(data, lay)
+        except FormatError as e:
+            errors.append(f"layout {lay}: {e}")
+    raise FormatError("; ".join(errors))
+
+
+def _parse(data: bytes, layout: str) -> dict:
     r = Reader(data)
     fmt, ver, gamever = r.u16(), r.u16(), r.u16()
     if fmt != FORMAT_ID:
@@ -543,9 +589,10 @@ def parse(data: bytes) -> dict:
     if r.u16() != PHYS_VERSION:
         raise FormatError("unsupported physics FormatVersion")
     phys = {}
-    for name, spec in PHYS_SECTIONS:
+    for name, spec in phys_sections(layout):
         phys[name] = r.section(spec)
     d["physics"] = phys
+    d["layout"] = layout
 
     trailing = r.take(N_TRAILING)
     if trailing != b"\x00" * N_TRAILING:
@@ -647,8 +694,14 @@ def write(d: dict) -> bytes:
     w.u16(PHYS_ID)
     w.u16(PHYS_VERSION)
     phys = d.get("physics", {})
-    for name, spec in PHYS_SECTIONS:
-        w.section(spec, phys.get(name, {}))
+    layout = layout_for(phys)
+    for name, spec in phys_sections(layout):
+        vals = phys.get(name, {})
+        if name == "braking" and layout == "B":
+            # complexLocking off is encoded by the layout itself; an explicit
+            # False byte would be misread as layout A by the game/parser.
+            vals = {k: v for k, v in vals.items() if k != "complexLocking"}
+        w.section(spec, vals)
     w.raw(b"\x00" * N_TRAILING)
     w.u16(PHYS_ID_END)
     return w.buf.getvalue()
@@ -656,9 +709,9 @@ def write(d: dict) -> bytes:
 
 # ---------------------------------------------------------------- .veh zip io
 
-def read_veh(path: str) -> dict:
+def read_veh(path: str, layout: str | None = None) -> dict:
     with zipfile.ZipFile(path) as z:
-        return parse(z.read("properties.bin"))
+        return parse(z.read("properties.bin"), layout)
 
 
 def write_veh(path: str, d: dict):
