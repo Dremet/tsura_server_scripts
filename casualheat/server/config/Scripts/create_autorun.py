@@ -25,7 +25,7 @@ DEFAULT_TRACKS = [
     ("Charlotte Speedway RC A V1.02", 1),
     ("Lotta Sisu Circuit v1.2", 1),
     ("Singapore Street Circuit v1.1", 1),
-    ("Testing Sebring v1.2", 1),
+    ("Testing Sebring v1.2.1", 1),
     ("Taupo Motorsport Park T1 v1.0.0", 1),
     ("Tomula GP v2.01", 1),
     ("Jäädytetty Indeksi - Club Layout", 1),
