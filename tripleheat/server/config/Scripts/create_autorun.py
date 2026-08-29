@@ -20,7 +20,7 @@ except Exception:  # a missing/broken helper must never kill a session
 DEFAULT_NUMBER_TRACKS = 3
 
 DEFAULT_TRACKS = [
-    ("Sebring v0.9967", 1),
+    ("Sebring v1.0 MX-5 Edition", 1),
     ("Automotodrom Zaluzani v1 R", 1),
     ("Bikernieki (HSR) v1.0 R", 1),
     ("Suzuka (East Circuit) v1 R", 1),
@@ -54,7 +54,7 @@ DEFAULT_TRACKS = [
     ("Hungaroring V2.04", 0.3),
     ("Canadian GP v1.23", 0.3),
     ("Australian GP v1.16", 0.3),
-    ("Daytona Road Course V2.01", 0.3),
+    ("Daytona Intl. Road Course V3.00", 0.3),
     ("Brazilian GP v1.04", 0.3),
     ("Raijin Mountain Circuit v1.00nsd", 0.3),
     ("Circuit Zolder v1.03", 0.3),

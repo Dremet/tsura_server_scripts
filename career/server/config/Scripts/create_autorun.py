@@ -21,7 +21,7 @@ NUMBER_TRACKS = 3
 
 TRACKS = [
     # same track pool as tripleheat, EQUAL probability (all weight 1)
-    ('Sebring v0.9967', 1),
+    ('Sebring v1.0 MX-5 Edition', 1),
     ('Automotodrom Zaluzani v1 R', 1),
     ('Bikernieki (HSR) v1.0 R', 1),
     ('Suzuka (East Circuit) v1 R', 1),
@@ -55,7 +55,7 @@ TRACKS = [
     ('Hungaroring V2.04', 1),
     ('Canadian GP v1.23', 1),
     ('Australian GP v1.16', 1),
-    ('Daytona Road Course V2.01', 1),
+    ('Daytona Intl. Road Course V3.00', 1),
     ('Brazilian GP v1.04', 1),
     ('Raijin Mountain Circuit v1.00nsd', 1),
     ('Circuit Zolder v1.03', 1),
