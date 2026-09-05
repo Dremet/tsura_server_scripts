@@ -115,6 +115,59 @@ def pick_tracks(tracks, count, rng):
     return [_weighted_draw(pool, rng) for _ in range(count)]
 
 
+def tracks_with_ai(tracks, vehicles, ai_pairs):
+    """Tracks that have a driving line for at least one of `vehicles`."""
+    return [t for t in tracks
+            if any(has_ai_line(ai_pairs, t.get("guid", ""), v.get("guid", ""))
+                   for v in vehicles)]
+
+
+def pick_pairs(tracks, vehicles, count, rng, ai_pairs=frozenset(),
+               require_ai=False):
+    """The (track, car) pairing for each of `count` races.
+
+    Track and car used to be drawn independently, so a heat could land on a
+    combination with no driving line and simply run without bots. With bots
+    switched on the draw is now restricted to covered combinations, so such a
+    pair is never chosen in the first place (McVizn, 2026-09-05).
+
+    The restriction is dropped when it would leave nothing to draw from -- a
+    heat without bots still beats no heat, and `ai_lines` on the round says
+    which of the two happened.
+    """
+    usable_tracks = [t for t in tracks if float(t.get("weight", 1)) > 0]
+    usable_cars = [v for v in vehicles if float(v.get("weight", 1)) > 0]
+    if not usable_tracks or not usable_cars:
+        return []
+
+    covered = tracks_with_ai(usable_tracks, usable_cars, ai_pairs)
+    enforced = bool(require_ai and covered)
+    if enforced:
+        usable_tracks = covered
+
+    track_pool = list(usable_tracks)
+    pairs, bag = [], []
+    for _ in range(min(count, len(usable_tracks))):
+        track = _weighted_draw(track_pool, rng)
+        choices = usable_cars
+        if enforced:
+            choices = [v for v in usable_cars
+                       if has_ai_line(ai_pairs, track.get("guid", ""),
+                                      v.get("guid", ""))]
+        # Same bag as before, so the cars spread over the heat instead of one
+        # of them coming up every race -- refilled when it holds nothing this
+        # track can use.
+        available = [v for v in bag if v in choices]
+        if not available:
+            bag = list(choices)
+            available = list(bag)
+        car = _weighted_draw(available, rng)
+        if car in bag:
+            bag.remove(car)
+        pairs.append((track, car))
+    return pairs
+
+
 def lap_bonus_pct(track, default=DEFAULT_LAP_BONUS_PCT):
     """How much a track's lap count may grow, in percent.
 
@@ -162,11 +215,13 @@ def build_heat_plan(config, rng, ai_pairs=frozenset()):
     # Test phase: every race the same short distance, real lap counts untouched.
     override = int(config.get("laps_override", 0) or 0)
 
-    picked = pick_tracks(tracks, per_heat, rng)
-    cars = pick_vehicles(vehicle_pool(config), len(picked), rng)
+    # Bots being configured at all is what gates the AI restriction, not how
+    # many humans happen to be on the server right now: the pairing is fixed
+    # for the whole heat, while bots stand down and come back per event.
+    require_ai = int(config.get("bot_fill", 0) or 0) > 0
     rounds = []
-    for i, t in enumerate(picked):
-        car = cars[i] if i < len(cars) else {}
+    for t, car in pick_pairs(tracks, vehicle_pool(config), per_heat, rng,
+                             ai_pairs, require_ai):
         rounds.append({
             "track": t.get("name", ""),
             "track_guid": t.get("guid", ""),

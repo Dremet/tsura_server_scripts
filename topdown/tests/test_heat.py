@@ -227,6 +227,79 @@ class TestHeatPlan(unittest.TestCase):
         self.assertEqual(a, b)
 
 
+class TestBotsOnlyGetCoveredCombinations(unittest.TestCase):
+    """With bots on, only track/car pairs that have a driving line are drawn.
+
+    Picking an uncovered pair used to be allowed: TSU then ran that race
+    without bots and the controller announced it. McVizn asked for the pair
+    not to be chosen at all (2026-09-05).
+    """
+
+    def _config(self, **over):
+        cfg = {"tracks": TRACKS, "tracks_per_heat": 4, "quali": {"laps": 1},
+               "bot_fill": 6,
+               "vehicles": [{"name": "VoZzer", "guid": VOZZER},
+                            {"name": "McTopper v1", "guid": MCTOPPER}]}
+        cfg.update(over)
+        return cfg
+
+    # Only the VoZzer has lines, and only on three of the six tracks.
+    COVERED_TRACKS = [TRACKS[0], TRACKS[1], TRACKS[2]]
+    PAIRS = {(t["guid"].lower(), VOZZER.lower()) for t in COVERED_TRACKS}
+
+    def test_only_covered_pairs_are_drawn(self):
+        for seed in range(25):
+            plan = heat.build_heat_plan(self._config(), random.Random(seed),
+                                        self.PAIRS)
+            for rnd in plan["rounds"]:
+                self.assertTrue(rnd["ai_lines"],
+                                f"seed {seed}: {rnd['track']} / {rnd['vehicle']}")
+                # McTopper has no lines here, so it must not be drawn.
+                self.assertEqual(rnd["vehicle"], "VoZzer")
+
+    def test_uncovered_tracks_are_never_picked(self):
+        covered = {t["name"] for t in self.COVERED_TRACKS}
+        for seed in range(25):
+            plan = heat.build_heat_plan(self._config(), random.Random(seed),
+                                        self.PAIRS)
+            for rnd in plan["rounds"]:
+                self.assertIn(rnd["track"], covered, f"seed {seed}")
+
+    def test_the_heat_shrinks_rather_than_reusing_a_track(self):
+        # Four races were asked for but only three tracks are covered.
+        plan = heat.build_heat_plan(self._config(), random.Random(1),
+                                    self.PAIRS)
+        names = [r["track"] for r in plan["rounds"]]
+        self.assertEqual(len(names), 3)
+        self.assertEqual(len(set(names)), 3)
+
+    def test_without_bots_the_draw_is_unrestricted(self):
+        seen = set()
+        for seed in range(25):
+            plan = heat.build_heat_plan(self._config(bot_fill=0),
+                                        random.Random(seed), self.PAIRS)
+            seen.update(r["track"] for r in plan["rounds"])
+        self.assertGreater(len(seen), len(self.COVERED_TRACKS),
+                           "bots off must not narrow the pool")
+
+    def test_no_lines_at_all_still_produces_a_full_heat(self):
+        plan = heat.build_heat_plan(self._config(), random.Random(3), set())
+        self.assertEqual(len(plan["rounds"]), 4,
+                         "a heat without bots still beats no heat")
+        self.assertTrue(all(not r["ai_lines"] for r in plan["rounds"]),
+                        "and it says so, so the controller can announce it")
+
+    def test_both_cars_are_used_when_both_are_covered(self):
+        pairs = {(t["guid"].lower(), car.lower())
+                 for t in TRACKS for car in (VOZZER, MCTOPPER)}
+        seen = set()
+        for seed in range(10):
+            plan = heat.build_heat_plan(self._config(), random.Random(seed),
+                                        pairs)
+            seen.update(r["vehicle"] for r in plan["rounds"])
+        self.assertEqual(seen, {"VoZzer", "McTopper v1"})
+
+
 class TestScoring(unittest.TestCase):
     def test_mcvizn_point_tables(self):
         self.assertEqual([heat.points_for(p, heat.DEFAULT_RACE_POINTS) for p in range(1, 9)],

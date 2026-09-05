@@ -37,7 +37,9 @@ class HeatHarness(unittest.TestCase):
 
     def setUp(self):
         self.dir = tempfile.mkdtemp()
-        for name in ("run_event_init.py", "run_event_end.py"):
+        # webconfig.py sits next to them on the real server; run_event_init
+        # reads the panel's collision settings through it.
+        for name in ("run_event_init.py", "run_event_end.py", "webconfig.py"):
             shutil.copy(os.path.join(SCRIPTS, name), self.dir)
         self.write("heat_plan.json", PLAN)
         self.write("heat_progress.json",
@@ -235,7 +237,8 @@ class TestCamera(unittest.TestCase):
         self.root = tempfile.mkdtemp()
         self.dir = os.path.join(self.root, "Scripts")
         os.makedirs(self.dir)
-        shutil.copy(os.path.join(SCRIPTS, "run_event_init.py"), self.dir)
+        for name in ("run_event_init.py", "webconfig.py"):
+            shutil.copy(os.path.join(SCRIPTS, name), self.dir)
         # camera.json sits one level above Scripts/, as on the real server.
         self.camera_path = os.path.join(self.root, "camera.json")
         with open(self.camera_path, "w", encoding="utf-8-sig") as fh:

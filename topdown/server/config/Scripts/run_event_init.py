@@ -18,7 +18,12 @@ swap qualifying and race for the rest of the evening after a restart.
 import json
 import os
 
-import webconfig
+try:
+    import webconfig
+except ImportError:                                    # pragma: no cover
+    # A missing helper must never stop an event from starting; the panel's
+    # collision settings are simply not applied then.
+    webconfig = None
 
 PLAN_FILE = "heat_plan.json"
 PROGRESS_FILE = "heat_progress.json"
@@ -206,7 +211,8 @@ def main():
 
     # Global vehicle collision settings from the admin panel. Last, so they
     # win over anything the heat plan set for this event.
-    commands += webconfig.get_collision_commands(webconfig.load("topdown"))
+    if webconfig is not None:
+        commands += webconfig.get_collision_commands(webconfig.load("topdown"))
 
     with open(OUTPUT_FILE, "w", encoding="utf-8-sig") as fh:
         fh.write("\n".join(commands) + "\n")
