@@ -108,3 +108,31 @@ def get_admins(cfg, default):
         return admins if admins else default
     except Exception:
         return default
+
+
+# Global vehicle collision settings (admin panel, "Vehicle collision").
+# The three values only bite while physics.adjustVehicleCollisionSettings is
+# on, so the master switch always travels with them. An absent block emits
+# nothing at all — the server keeps whatever it booted with; an explicitly
+# disabled block turns the master switch back off, so unticking the box in
+# the panel really does restore the game's own collision behaviour.
+COLLISION_KEYS = ("collisionSteadiness", "collisionExtraStability",
+                  "stuckAvoidance")
+
+
+def get_collision_commands(cfg):
+    """['/physics.adjustVehicleCollisionSettings = 1', ...] or []."""
+    try:
+        block = _get(cfg, "collision")
+    except Exception:
+        return []
+    if not isinstance(block, dict) or not block:
+        return []      # never configured here — leave the server alone
+    if not block.get("enabled"):
+        return ["/physics.adjustVehicleCollisionSettings = 0"]
+    commands = ["/physics.adjustVehicleCollisionSettings = 1"]
+    for key in COLLISION_KEYS:
+        val = get_num(block, key, None)
+        if val is not None:
+            commands.append(f"/physics.{key} = {val}")
+    return commands

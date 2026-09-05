@@ -18,6 +18,8 @@ swap qualifying and race for the rest of the evening after a restart.
 import json
 import os
 
+import webconfig
+
 PLAN_FILE = "heat_plan.json"
 PROGRESS_FILE = "heat_progress.json"
 DONE_FILE = "topdown_event_done"     # present iff an event ended since last init
@@ -201,6 +203,10 @@ def main():
             commands = race_commands(rnd, plan, plan.get("drafting"))
         else:
             commands = quali_commands(rnd, plan)
+
+    # Global vehicle collision settings from the admin panel. Last, so they
+    # win over anything the heat plan set for this event.
+    commands += webconfig.get_collision_commands(webconfig.load("topdown"))
 
     with open(OUTPUT_FILE, "w", encoding="utf-8-sig") as fh:
         fh.write("\n".join(commands) + "\n")

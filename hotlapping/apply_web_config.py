@@ -52,6 +52,8 @@ import sys
 import time
 from datetime import datetime
 
+import webconfig
+
 CONFIG = "/srv/tsura/server_config/hotlapping.json"
 APPLIED = "/srv/tsura/server_config/hotlapping.applied.json"
 LIVE = "/srv/tsura/server_config/hotlapping.live.json"
@@ -79,6 +81,10 @@ AUTORUN_WAIT = 40
 LIVE_RESTORE = True
 
 SETUP_KEYS = ("track", "vehicle", "hotlap_behind_distance", "events_per_session")
+
+
+def collision_changed(cfg, applied):
+    return cfg.get("collision") != applied.get("collision")
 
 
 def log(msg):
@@ -457,7 +463,8 @@ def main(dry_run=False):
 
     setup_changed = restore_empty or any(cfg.get(k) != applied.get(k) for k in SETUP_KEYS)
     admins_changed = cfg.get("ingame_admins") != applied.get("ingame_admins")
-    if not setup_changed and not admins_changed:
+    physics_changed = collision_changed(cfg, applied)
+    if not setup_changed and not admins_changed and not physics_changed:
         if not dry_run:
             write_json(APPLIED, cfg)
         return
@@ -478,6 +485,7 @@ def main(dry_run=False):
     if dry_run:
         log(
             f"DRY-RUN: setup_changed={setup_changed} admins_changed={admins_changed} "
+            f"physics_changed={physics_changed} "
             f"announce={announce} applied_missing={applied_missing} "
             f"restore_empty={restore_empty} target={track!r}/{vehicle!r} live={live}"
         )
@@ -497,6 +505,9 @@ def main(dry_run=False):
         if admins_changed and admins:
             # admin-only sync never interrupts the running event
             commands += ["/admins /clear"] + [f"/admins /add {sid}" for sid in admins]
+        if physics_changed:
+            # physics-only: no /continue, the running event is not disturbed
+            commands += webconfig.get_collision_commands(cfg)
         if setup_changed:
             commands += [
                 "/refreshfiles",
@@ -518,6 +529,13 @@ def main(dry_run=False):
             commands += ["/continue"]
     except ValueError as exc:
         log(f"cannot build commands: {exc}")
+        return
+
+    if not commands:
+        # e.g. the collision block was removed from the config: there is
+        # nothing to send, but the state is now in sync. An empty autorun.src
+        # would just sit there and block the next real push.
+        write_json(APPLIED, cfg)
         return
 
     with open(AUTORUN, "w") as f:
@@ -542,6 +560,7 @@ def main(dry_run=False):
 
     log(
         f"applied: setup_changed={setup_changed} admins_changed={admins_changed} "
+        f"physics_changed={physics_changed} "
         f"announce={announce} restore_empty={restore_empty} track={track!r} "
         f"vehicle={vehicle!r} distance={distance} events={events}"
     )

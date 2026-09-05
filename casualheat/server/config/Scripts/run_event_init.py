@@ -214,6 +214,10 @@ else:
     ]
 
 
+# global vehicle collision settings (admin panel, "Vehicle collision")
+# — before the advanced params, so an explicit override still wins
+commands += webconfig.get_collision_commands(_CFG)
+
 # web-configured extra event parameters (admin panel, "Advanced")
 extra = webconfig.get_params(_CFG, ("quali" if quali else "race", "params"))
 commands += [f"/{path} = {value}" for path, value in sorted(extra.items())]
