@@ -81,7 +81,14 @@ else:
         "/race.raceMode = Race",
         f"/race.maxLaps = {RACE_LAPS}",
         f"/race.maxMinutes = {RACE_MAX_MINUTES}",
-        "/race.startStyle = Standing",
+        # "Standing" is not a startStyle value -- the console only takes
+        # Countdown (0) and Random (1), and rejected this at every one of
+        # the last 19 races ("Invalid value - use value name or a number
+        # between 0 and 1"), so the race silently kept the qualifying's
+        # countdown. Random is what TripleHeat and Casual Heat use: the
+        # wait before the lights go out varies, so the start is a
+        # reaction test rather than a memorised count (Andre, 2026-09-05).
+        "/race.startStyle = Random",
         "/race.ContactRules = Normal",
         "/fuel.fuelOn = 1",
         "/tireWear.tireWearOn = 1",
