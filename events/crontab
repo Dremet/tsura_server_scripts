@@ -24,8 +24,12 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
 # m h  dom mon dow   command
 15 4 * * * steamcmd +login anonymous +quit
 15 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
-# 05:20 (after the 05:15 restart): re-apply the tsura.org web admin list —
-# TSU loads admins from game.json at boot and forgets runtime /admins changes
-20 5 * * * /usr/bin/python3 /home/events/apply_web_admins.py >> /home/events/apply_web_admins.log 2>&1
+# Keep the in-game admin list equal to the tsura.org web admin list. TSU loads
+# admins from game.json at boot and forgets runtime /admins changes — and on
+# 2026-09-05 the running server silently dropped one admin with nothing in the
+# log, so this asks /admins every ten minutes and only pushes on a mismatch
+# (a quiet run writes nothing). Daily at 05:20 was too slow: a list lost in the
+# morning stayed lost until the next day.
+*/10 * * * * /usr/bin/python3 /home/events/apply_web_admins.py >> /home/events/apply_web_admins.log 2>&1
 # keep tsura.org upload dirs group-writable (TSU resets them on in-game content import)
 * * * * * /home/events/fix_upload_perms.sh
