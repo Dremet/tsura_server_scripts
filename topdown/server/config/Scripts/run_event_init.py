@@ -30,6 +30,12 @@ PROGRESS_FILE = "heat_progress.json"
 DONE_FILE = "topdown_event_done"     # present iff an event ended since last init
 OUTPUT_FILE = "event_init_generated.src"
 
+# Lap records per track/car pairing, written by the results pipeline (the game
+# server has no database of its own). Missing or stale is fine -- the record is
+# a nice-to-have and must never hold up an event init.
+RECORDS_FILE = os.environ.get("TOPDOWN_RECORDS_FILE",
+                              "/srv/tsura/server_config/topdown_records.json")
+
 BADGE = "<color=#fd7e14>[TopDown]</color>"
 GREY = "<color=#aaaaaa>"
 
@@ -116,8 +122,38 @@ def apply_camera(rnd, plan):
     return [f"/special.forcedCameraPreset = {preset}"]
 
 
+def fmt_lap(seconds):
+    """M:SS.FFFF -- the same shape tsura.org prints lap times in."""
+    minutes = int(seconds // 60)
+    return f"{minutes}:{seconds - minutes * 60:07.4f}"
+
+
+def record_line(rnd):
+    """Announce the record for this track/car pairing, or None to stay quiet.
+
+    Quiet on purpose when the records file is unreadable: claiming "no record
+    yet" because a file is missing would be a lie players cannot check.
+    """
+    key = f"{rnd.get('track_guid', '')}|{rnd.get('vehicle_guid', '')}"
+    try:
+        with open(RECORDS_FILE, encoding="utf-8-sig") as fh:
+            records = json.load(fh)["records"]
+    except Exception:                                  # noqa: BLE001
+        return None
+    rec = records.get(key)
+    if not rec:
+        return (f"/broadcast {BADGE} {GREY}No record here yet -- "
+                f"the first clean lap sets it.</color>")
+    try:
+        return (f"/broadcast {BADGE} {GREY}Record: {fmt_lap(float(rec['lap']))}"
+                f" by {rec['driver']}</color>")
+    except Exception:                                  # noqa: BLE001
+        return None
+
+
 def quali_commands(rnd, plan):
     laps = int(plan.get("quali_laps", 1))
+    record = record_line(rnd)
     return point_commands(plan.get("quali_points", [1])) + apply_camera(rnd, plan) + [
         "/refreshfiles",
         "/race.raceMode = Hotlapping",
@@ -130,7 +166,7 @@ def quali_commands(rnd, plan):
         "/tireWear.tireWearOn = 0",
         f"/broadcast {BADGE} Qualifying at {rnd['track']} -- {laps} lap"
         f"{'s' if laps != 1 else ''} for grid position.",
-    ]
+    ] + ([record] if record else [])
 
 
 def race_commands(rnd, plan, draft):
@@ -188,6 +224,10 @@ def main():
                         f"{rnd.get('laps', FALLBACK_LAPS)} laps. "
                         f"{GREY}Grid from qualifying.</color>")
             commands = [line]
+            if quali:
+                record = record_line(rnd)
+                if record:
+                    commands.append(record)
             if not quali and not rnd.get("ai_lines", True):
                 commands.append(f"/broadcast {BADGE} {GREY}No AI lines for this "
                                 f"track -- running without bots.</color>")

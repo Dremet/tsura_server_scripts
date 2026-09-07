@@ -333,3 +333,83 @@ class TestSessionMode(HeatHarness):
         self.assertEqual(self.read("heat_progress.json")["phase"], "race")
         cmds = self.event_init()
         self.assertTrue(any("Race at Jonno Island" in c for c in cmds))
+
+
+class TestRecordAnnouncement(HeatHarness):
+    """Before a qualifying the lobby is told what time there is to beat."""
+
+    RECORD_KEY = "139k2kmmzws3-33vswqr|17xxzrmve5gb-3868ch8"
+
+    def setUp(self):
+        super().setUp()
+        plan = json.loads(json.dumps(PLAN))
+        plan["session_name"] = "topdown_heat"
+        for rnd in plan["rounds"]:
+            rnd["vehicle"] = "VoZzer"
+            rnd["vehicle_guid"] = "17xxzrmve5gb-3868ch8"
+        self.write("heat_plan.json", plan)
+        self.records = os.path.join(self.dir, "records.json")
+        os.environ["TOPDOWN_RECORDS_FILE"] = self.records
+
+    def tearDown(self):
+        os.environ.pop("TOPDOWN_RECORDS_FILE", None)
+        super().tearDown()
+
+    def write_records(self, records):
+        with open(self.records, "w", encoding="utf-8") as fh:
+            json.dump({"generated_at": "2026-09-07T09:00:00+00:00",
+                       "records": records}, fh)
+
+    def record_lines(self, cmds):
+        return [c for c in cmds if "Record" in c or "record" in c]
+
+    def test_known_pairing_is_announced_with_time_and_driver(self):
+        self.write_records({self.RECORD_KEY: {
+            "track": "Jonno Island v1.0", "vehicle": "VoZzer",
+            "lap": 62.3456, "driver": "Dremet"}})
+        lines = self.record_lines(self.event_init())
+        self.assertEqual(len(lines), 1)
+        self.assertIn("1:02.3456", lines[0])
+        self.assertIn("Dremet", lines[0])
+
+    def test_unknown_pairing_says_the_record_is_open(self):
+        self.write_records({"someone-else|some-car": {
+            "track": "x", "vehicle": "y", "lap": 1.0, "driver": "z"}})
+        lines = self.record_lines(self.event_init())
+        self.assertEqual(len(lines), 1)
+        self.assertIn("No record here yet", lines[0])
+
+    def test_missing_records_file_stays_quiet(self):
+        # Claiming "no record yet" because the pipeline file is absent would be
+        # a lie players cannot check -- so nothing is said at all.
+        cmds = self.event_init()
+        self.assertEqual(self.record_lines(cmds), [])
+        self.assertTrue(any("Qualifying at Jonno Island" in c for c in cmds))
+
+    def test_a_broken_records_file_stays_quiet(self):
+        with open(self.records, "w", encoding="utf-8") as fh:
+            fh.write("{not json")
+        cmds = self.event_init()
+        self.assertEqual(self.record_lines(cmds), [])
+        self.assertTrue(any("Qualifying at Jonno Island" in c for c in cmds))
+
+    def test_the_race_itself_is_not_annotated(self):
+        self.write_records({self.RECORD_KEY: {
+            "track": "Jonno Island v1.0", "vehicle": "VoZzer",
+            "lap": 62.3456, "driver": "Dremet"}})
+        self.event_init()
+        self.event_end()
+        cmds = self.event_init()
+        self.assertTrue(any("Race at Jonno Island" in c for c in cmds))
+        self.assertEqual(self.record_lines(cmds), [])
+
+    def test_the_fallback_path_announces_it_too(self):
+        # No session archive: the script pushes settings itself, and the
+        # announcement has to survive that other code path.
+        self.write("heat_plan.json", PLAN)
+        self.write_records({"139k2kmmzws3-33vswqr|": {
+            "track": "Jonno Island v1.0", "vehicle": "VoZzer",
+            "lap": 62.3456, "driver": "Dremet"}})
+        lines = self.record_lines(self.event_init())
+        self.assertEqual(len(lines), 1)
+        self.assertIn("1:02.3456", lines[0])
