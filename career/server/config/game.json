@@ -284,7 +284,7 @@
         },
         "tireWear": {
             "tireWearOn": 0,
-            "tireChangeTime": 6.5,
+            "tireChangeTime": 6,
             "tireCompoundCount": 1,
             "compound1Name": 0,
             "compound1InitialPerformance": 100,
