@@ -19,7 +19,7 @@ All career-user files need `sudo -u career …` (the `claude` user's EACCES othe
 ```
 55 20 * * 1  /home/career/run_prepare.sh            # generate tuned cars
 59 20 * * 1  … create_autorun.py announce_1_minute  # in-game "1 minute" warning
-00 21 * * 1  … create_autorun.py start_session       # /refreshfiles, queue 2 tracks × (quali+race), force cars, broadcast builds
+00 21 * * 1  … create_autorun.py start_session       # /refreshfiles, queue 3 tracks × (quali+race), force cars, broadcast builds
 00 23 * * 1  … create_autorun.py skip_to_new_session # wind down
 ```
 
@@ -53,7 +53,7 @@ run_prepare.sh ─► career_tools/career_prepare_session.py
     └─ writes per-driver .veh into server/config/Vehicles/  +  assignments.json (incl. focus text)
 
 create_autorun.py start_session ─► writes autorun.src (server consumes it)
-    └─ /refreshfiles, /admins, queue tracks, broadcast "Tonight's builds"
+    └─ /refreshfiles, /admins, queue unused season tracks, broadcast "Tonight's builds"
 
 per event: TSU fires the hook chain ─► run_event_init.py ─► event_init_generated.src
     └─ /refreshfiles, quali (Hotlapping 3 laps) OR race settings, /vehicles + /forcevehicle per Steam-ID
@@ -63,6 +63,13 @@ race end ─► move_raw_files.sh ─► /home/data/career/<ts>/raw/*  +  new_ca
 
 website tsura.org/career reads mart.v_career_* views
 ```
+
+Track choices are recorded immediately in
+`server/config/Scripts/career_track_history.json`, scoped by the season ID in
+`assignments.json`. Recorded race results are also copied into `assignments.json`
+at preparation time, so a missing local history file cannot re-offer tracks that
+have already been raced. The website combines both sources when marking tracks
+as taken.
 
 Only **race** events produce rewards + tire telemetry; **qualis** run in Hotlapping
 mode (no tires, no rewards) and only set the grid for the following race

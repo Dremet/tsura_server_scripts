@@ -215,6 +215,15 @@ def prepare(db_url: str, vehicles_dir: str, scripts_dir: str,
                     "WHERE du.season_id=%s", (season["id"],))
         spent_rows = cur.fetchall()
 
+        # Feed the autorun generator the tracks already raced in this season.
+        # It combines these with its local selection history, which also covers
+        # tracks picked for tonight before the results reach the database.
+        cur.execute("SELECT DISTINCT track_name "
+                    "FROM mart.v_career_race_sessions "
+                    "WHERE season_id=%s AND track_name IS NOT NULL",
+                    (season["id"],))
+        used_tracks = sorted(r["track_name"] for r in cur.fetchall())
+
         # race-day challenges: assign before the session, never fatal
         race_date = objectives_date or datetime.date.today()
         try:
@@ -253,6 +262,7 @@ def prepare(db_url: str, vehicles_dir: str, scripts_dir: str,
 
     out = {"season": season["name"], "season_id": season["id"],
            "base_vehicle_name": season["base_vehicle_name"],
+           "used_tracks": used_tracks,
            "assignments": assignments}
     with open(os.path.join(scripts_dir, "assignments.json"), "w",
               encoding="utf-8") as f:

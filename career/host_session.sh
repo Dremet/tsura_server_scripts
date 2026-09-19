@@ -56,7 +56,7 @@ case "${1:-}" in
     $AUTORUN announce_1_minute
     sleep 60
     $AUTORUN start_session
-    echo "[career] session started (2 tracks, quali + race each)."
+    echo "[career] session started (3 tracks, quali + race each)."
     nohup bash -c "sleep $((DURATION_MIN * 60)); cd '$SCRIPTS' && timeout 90 /usr/bin/python3 create_autorun.py skip_to_new_session; rm -f '$TIMER_PID_FILE'" >/dev/null 2>&1 &
     echo $! > "$TIMER_PID_FILE"
     echo "[career] auto wind-down in $DURATION_MIN min — or earlier via: $0 stop"

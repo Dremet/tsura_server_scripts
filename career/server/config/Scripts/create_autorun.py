@@ -18,6 +18,7 @@ import random
 
 ### CONSTANTS ###
 NUMBER_TRACKS = 3
+TRACK_HISTORY_FILE = "career_track_history.json"
 
 TRACKS = [
     # same track pool as tripleheat, EQUAL probability (all weight 1)
@@ -124,6 +125,46 @@ def select_random_elements_with_weights(tracks_with_weights, n=2):
     return selected
 
 
+def _season_track_state():
+    """Return the current season id and every track already selected for it.
+
+    assignments.json contributes races already present in the database.  The
+    local history contributes tonight's picks immediately, before race results
+    have been processed.  History from another season is deliberately ignored.
+    """
+    with open("assignments.json", encoding="utf-8") as f:
+        assignments = json.load(f)
+    season_id = assignments["season_id"]
+    selected = set(assignments.get("used_tracks", []))
+    try:
+        with open(TRACK_HISTORY_FILE, encoding="utf-8") as f:
+            history = json.load(f)
+        if history.get("season_id") == season_id:
+            selected.update(history.get("tracks", []))
+    except (OSError, ValueError, TypeError):
+        pass
+    return season_id, selected
+
+
+def select_season_tracks(n=NUMBER_TRACKS):
+    """Pick unused tracks and persist the choice for the active season."""
+    season_id, selected = _season_track_state()
+    available = [(track, weight) for track, weight in TRACKS
+                 if track not in selected]
+    if len(available) < n:
+        raise RuntimeError(
+            f"only {len(available)} unused tracks remain in season {season_id}; "
+            f"need {n}")
+    tracks = select_random_elements_with_weights(available, n)
+    selected.update(tracks)
+    tmp = TRACK_HISTORY_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump({"season_id": season_id, "tracks": sorted(selected)},
+                  f, indent=2, ensure_ascii=False)
+    os.replace(tmp, TRACK_HISTORY_FILE)
+    return tracks
+
+
 def build_focus_lines():
     """Broadcast lines summarizing each driver's tuning focus (from
     assignments.json, written by career_prepare_session.py at prep time)."""
@@ -195,6 +236,9 @@ def skip_to_new_session():
 
 @wait_for_autorun_file
 def start_session():
+    # Reserve the tracks before changing session state.  If the season has no
+    # unused tracks left, fail cleanly without leaving a stale session lock.
+    tracks = select_season_tracks()
     save_quali_marker_file()
     # session lock: run_prepare.sh must NOT regenerate .veh while this exists
     open("session_active", "w").close()
@@ -212,7 +256,6 @@ def start_session():
         "/levels /clear",
     ]
 
-    tracks = select_random_elements_with_weights(TRACKS, NUMBER_TRACKS)
     duplicated_tracks = []
     for track in tracks:
         duplicated_tracks.append(track)  # quali (Hotlapping)
