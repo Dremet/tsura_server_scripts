@@ -1,0 +1,6 @@
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/games
+30 5 * * * ~/restart_server.sh >> ~/cron.log 2>&1
+*/10 * * * * /usr/bin/python3 /home/fun/apply_web_admins.py >> /home/fun/apply_web_admins.log 2>&1
+* * * * * /home/fun/fix_upload_perms.sh
+
+@reboot sleep 40 && /home/fun/restart_server.sh >> /home/fun/reboot.log 2>&1
